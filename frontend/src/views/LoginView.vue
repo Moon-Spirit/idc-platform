@@ -37,7 +37,7 @@ async function handleLogin() {
   loginError.value = ''
   try {
     await authStore.login(form)
-    const redirect = (route.query.redirect as string) || '/dashboard'
+    const redirect = (route.query.redirect as string) || '/admin/dashboard'
     router.push(redirect)
   } catch (e) {
     loginError.value = (e as Error).message || '登录失败，请重试'
