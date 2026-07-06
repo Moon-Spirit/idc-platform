@@ -15,6 +15,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '经销商注册', noAuth: true },
   },
   {
+    path: '/setup',
+    name: 'Setup',
+    component: () => import('@/views/SetupView.vue'),
+    meta: { title: '安装向导', noAuth: true },
+  },
+  {
     path: '/',
     name: 'Layout',
     component: Layout,
