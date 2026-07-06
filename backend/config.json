@@ -1,0 +1,37 @@
+{
+    "app": {
+        "number_of_threads": 4,
+        "log": {
+            "log_path": "./logs",
+            "logfile_base_name": "idc",
+            "log_level": "info"
+        },
+        "client_max_body_size": "16M",
+        "client_max_memory_body_size": "64K",
+        "keep_alive_timeout": 120
+    },
+    "db_clients": [
+        {
+            "name": "idc_db",
+            "rdbms": "postgresql",
+            "host": "localhost",
+            "port": 5432,
+            "dbname": "idc_platform",
+            "user": "idcapp",
+            "password": "idcapp123",
+            "connection_number": 10,
+            "timeout": 5.0
+        }
+    ],
+    "redis_clients": [
+        {
+            "name": "idc_redis",
+            "host": "localhost",
+            "port": 6379,
+            "db": 0,
+            "password": "",
+            "connection_number": 4,
+            "timeout": 3.0
+        }
+    ]
+}

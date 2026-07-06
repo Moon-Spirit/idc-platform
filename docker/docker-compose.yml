@@ -1,0 +1,98 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# IDC Platform — Docker Development Environment
+# ═══════════════════════════════════════════════════════════════════════════════
+# Usage:
+#   docker compose up -d              # Start all services
+#   docker compose up -d --build      # Rebuild and start
+#   docker compose down -v            # Stop and remove volumes (reset DB/Redis)
+#   docker compose logs -f            # Follow logs
+
+services:
+  # ── PostgreSQL 16 ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: idc-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: idc_platform
+      POSTGRES_USER: idcapp
+      POSTGRES_PASSWORD: idcapp123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount init scripts here for future migrations, e.g.:
+      # ./postgres/init/001-schema.sql:/docker-entrypoint-initdb.d/001-schema.sql
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U idcapp -d idc_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - idc-network
+
+  # ── Redis 7 (no persistence for dev) ─────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: idc-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - idc-network
+
+  # ── Gotenberg 8 (PDF generation) ────────────────────────────────────────────
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: idc-gotenberg
+    restart: unless-stopped
+    # Not exposed to host — accessible internally via http://gotenberg:3000
+    networks:
+      - idc-network
+
+  # ── Backend (Drogon C++17) ──────────────────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: idc-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - idc-network
+
+  # ── Nginx (reverse proxy + static files) ────────────────────────────────────
+  nginx:
+    build:
+      context: ..
+      dockerfile: docker/nginx/Dockerfile
+    container_name: idc-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - idc-network
+
+volumes:
+  postgres_data:
+    name: idc_postgres_data
+  redis_data:
+    name: idc_redis_data
+
+networks:
+  idc-network:
+    name: idc-network
+    driver: bridge

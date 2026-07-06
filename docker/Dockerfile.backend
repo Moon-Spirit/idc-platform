@@ -1,0 +1,68 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# IDC Platform Backend — Multi-stage Docker Build
+# ═══════════════════════════════════════════════════════════════════════════════
+# Stage 1 (builder): Ubuntu 22.04 with full build toolchain
+# Stage 2 (runner):   Ubuntu 22.04 slim — binary + runtime libs only (~200MB)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── Stage 1: Builder ──────────────────────────────────────────────────────────
+FROM ubuntu:22.04 AS builder
+
+LABEL stage="builder"
+LABEL description="IDC Platform Backend — Build Stage"
+
+# Prevent interactive prompts during apt install
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies
+#   drogon needs: cmake, g++, libssl-dev, libpq-dev, libhiredis-dev, uuid-dev, zlib1g-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    libhiredis-dev \
+    uuid-dev \
+    zlib1g-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Copy project source
+COPY backend/CMakeLists.txt backend/
+COPY backend/src backend/src
+COPY backend/config.json backend/
+
+# Build in Release mode using all available cores
+RUN cmake -S backend -B build \
+      -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --parallel "$(nproc)"
+
+# ── Stage 2: Runner ───────────────────────────────────────────────────────────
+FROM ubuntu:22.04 AS runner
+
+LABEL description="IDC Platform Backend — Runtime"
+
+# Install runtime libraries only (not build toolchain)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl3 \
+    libpq5 \
+    libhiredis1.0.0 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy compiled binary from builder
+COPY --from=builder /build/build/idc-platform .
+
+# Override config.json with Docker-specific service names
+# (host: "postgres" / "redis" instead of "localhost")
+COPY docker/config/config.json ./config.json
+
+EXPOSE 8080
+
+CMD ["./idc-platform"]
