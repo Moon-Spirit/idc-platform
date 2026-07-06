@@ -1,12 +1,20 @@
 #include <drogon/drogon.h>
 #include "utils/error_handler.h"
 #include "utils/logger.h"
+#include "utils/config.h"
+
+#include "controllers/auth_controller.h"
+#include "controllers/distributor_controller.h"
+#include "controllers/user_controller.h"
 
 #include <iostream>
 
 int main() {
     // ── Load configuration ───────────────────────────────────────────────────
     drogon::app().loadConfigFile("config.json");
+
+    // ── Load JWT config from custom section ─────────────────────────────────
+    idc::Config::init();
 
     // ── Register global error handler ────────────────────────────────────────
     idc::ErrorHandler::init();

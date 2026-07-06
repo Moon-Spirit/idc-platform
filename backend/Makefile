@@ -1,13 +1,16 @@
 BUILD_DIR ?= build
 CMAKE     ?= cmake
 JOBS      ?= $(shell nproc 2>/dev/null || echo 4)
+DEPS_PREFIX ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))deps)
 
 .PHONY: build run clean test
 
 ## build    — Configure & compile the project
 build:
 	@mkdir -p $(BUILD_DIR)
-	cd $(BUILD_DIR) && $(CMAKE) .. -DCMAKE_BUILD_TYPE=Release
+	cd $(BUILD_DIR) && $(CMAKE) .. -DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_PREFIX_PATH=$(DEPS_PREFIX) \
+		-DJsoncpp_DIR=$(DEPS_PREFIX)/lib/cmake/jsoncpp
 	$(MAKE) -C $(BUILD_DIR) -j$(JOBS)
 
 ## run      — Launch the server (builds first if needed)

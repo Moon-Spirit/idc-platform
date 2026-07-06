@@ -1,0 +1,11 @@
+prefix=/home/sanjiu/IDC/backend/deps
+exec_prefix=/home/sanjiu/IDC/backend/deps
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: jsoncpp
+Description: A C++ library for interacting with JSON
+Version: 1.10.0
+URL: https://github.com/open-source-parsers/jsoncpp
+Libs: -L${libdir} -ljsoncpp
+Cflags: -I${includedir}

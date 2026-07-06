@@ -8,7 +8,7 @@
       "plan_name": "idc-platform-v1",
       "status": "active",
       "started_at": "2026-07-06T08:04:44.504Z",
-      "updated_at": "2026-07-06T08:20:06.282Z",
+      "updated_at": "2026-07-06T10:11:14.362Z",
       "session_ids": [
         "opencode:ses_0c9e6d3b5fferywCyyud4EMUPO"
       ],
@@ -42,6 +42,32 @@
           "status": "completed",
           "ended_at": "2026-07-06T08:20:06.282Z",
           "elapsed_ms": 18781
+        },
+        "todo:5": {
+          "task_key": "todo:5",
+          "task_label": "5",
+          "task_title": "JWT 认证 + RBAC 权限系统（后端）",
+          "session_id": "opencode:ses_0c97c42a2ffexzKxoCoJDlDv68",
+          "agent": "Sisyphus-Junior",
+          "category": "deep",
+          "updated_at": "2026-07-06T09:53:49.569Z",
+          "started_at": "2026-07-06T09:53:24.739Z",
+          "status": "completed",
+          "ended_at": "2026-07-06T09:53:49.569Z",
+          "elapsed_ms": 24830
+        },
+        "todo:6": {
+          "task_key": "todo:6",
+          "task_label": "6",
+          "task_title": "前端登录+路由守卫+动态路由",
+          "session_id": "opencode:ses_0c926a431ffelY5aHpb0j4pcg9",
+          "agent": "Sisyphus-Junior",
+          "category": "visual-engineering",
+          "updated_at": "2026-07-06T10:11:14.362Z",
+          "started_at": "2026-07-06T10:11:01.088Z",
+          "status": "completed",
+          "ended_at": "2026-07-06T10:11:14.362Z",
+          "elapsed_ms": 13274
         }
       }
     }
@@ -49,7 +75,7 @@
   "active_plan": "/home/sanjiu/IDC/.omo/plans/idc-platform-v1.md",
   "started_at": "2026-07-06T08:04:44.504Z",
   "status": "active",
-  "updated_at": "2026-07-06T08:20:06.282Z",
+  "updated_at": "2026-07-06T10:11:14.362Z",
   "session_ids": [
     "opencode:ses_0c9e6d3b5fferywCyyud4EMUPO"
   ],
@@ -83,6 +109,32 @@
       "status": "completed",
       "ended_at": "2026-07-06T08:20:06.282Z",
       "elapsed_ms": 18781
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "JWT 认证 + RBAC 权限系统（后端）",
+      "session_id": "opencode:ses_0c97c42a2ffexzKxoCoJDlDv68",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-07-06T09:53:49.569Z",
+      "started_at": "2026-07-06T09:53:24.739Z",
+      "status": "completed",
+      "ended_at": "2026-07-06T09:53:49.569Z",
+      "elapsed_ms": 24830
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "前端登录+路由守卫+动态路由",
+      "session_id": "opencode:ses_0c926a431ffelY5aHpb0j4pcg9",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-07-06T10:11:14.362Z",
+      "started_at": "2026-07-06T10:11:01.088Z",
+      "status": "completed",
+      "ended_at": "2026-07-06T10:11:14.362Z",
+      "elapsed_ms": 13274
     }
   },
   "agent": "atlas"

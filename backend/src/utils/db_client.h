@@ -1,5 +1,6 @@
 #pragma once
 
+#include <drogon/HttpAppFramework.h>
 #include <drogon/orm/DbClient.h>
 #include <drogon/orm/Exception.h>
 #include <drogon/orm/Mapper.h>
@@ -45,8 +46,7 @@ public:
         auto trans  = client->newTransaction();
         try {
             func(*trans);
-            // commit synchronously — throws on failure
-            trans->commit();
+            // No explicit commit — Transaction destructor commits on success
         } catch (...) {
             trans->rollback();
             throw;
@@ -63,7 +63,7 @@ public:
         auto trans  = client->newTransaction();
         try {
             func(*trans);
-            trans->commit();
+            // No explicit commit — Transaction destructor commits on success
         } catch (...) {
             trans->rollback();
             throw;

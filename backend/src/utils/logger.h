@@ -19,23 +19,20 @@ public:
     /// Attach a request ID to the request for traceability.
     static std::string setRequestId(const drogon::HttpRequestPtr& req) {
         auto id = generateId();
-        req->setAttribute("request_id", id);
+        req->getAttributes()->insert("request_id", id);
         return id;
     }
 
     /// Attach an explicit request ID.
     static void setRequestId(const drogon::HttpRequestPtr& req,
                              const std::string& id) {
-        req->setAttribute("request_id", id);
+        req->getAttributes()->insert("request_id", id);
     }
 
     /// Retrieve the request ID from the request attributes.
     static std::string getRequestId(const drogon::HttpRequestPtr& req) {
-        if (req) {
-            auto attr = req->getAttribute("request_id");
-            if (attr) {
-                return attr->as<std::string>();
-            }
+        if (req && req->getAttributes()->find("request_id")) {
+            return req->getAttributes()->get<std::string>("request_id");
         }
         return "-";
     }

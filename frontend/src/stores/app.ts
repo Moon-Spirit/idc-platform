@@ -22,6 +22,11 @@ export const useAppStore = defineStore('app', () => {
       name: 'Dashboard',
       meta: { title: '仪表盘', icon: 'Odometer' },
     },
+    {
+      path: '/admin/distributors',
+      name: 'DistributorList',
+      meta: { title: '经销商管理', icon: 'UserFilled' },
+    },
   ])
 
   function toggleSidebar(): void {

@@ -6,6 +6,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# ── CMAKE_MODULE_PATH: our cmake/ dir found first (overrides Drogon's FindJsoncpp) ─
+list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# ── Find required system packages (so targets are available in our scope) ────
+find_package(OpenSSL REQUIRED)
+
 # ── Fetch Drogon with PostgreSQL & Redis support ──────────────────────────────
 include(FetchContent)
 
@@ -34,8 +40,9 @@ add_executable(idc-platform ${SOURCES})
 
 target_link_libraries(idc-platform
     PRIVATE
-        Drogon::Drogon
+        drogon
         pthread
+        crypt
         OpenSSL::SSL
         OpenSSL::Crypto
 )

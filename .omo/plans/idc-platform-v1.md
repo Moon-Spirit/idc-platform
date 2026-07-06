@@ -153,7 +153,7 @@ Your next move: 审阅计划后启动执行。
 
 ### Wave 2: 认证 & 经销商管理 & 产品目录 (第3-4周)
 
-- [ ] 5. JWT 认证 + RBAC 权限系统（后端）
+- [x] 5. JWT 认证 + RBAC 权限系统（后端）
   What to do / Must NOT do: 实现 Drogon JWT 过滤器（jwt_filter.cc），token 签发/刷新/黑名单（Redis存黑名单）。实现 RBAC 过滤器（rbac_filter.cc），基于角色判断接口权限。创建用户注册/登录 API。支持管理员和经销商两种角色。
   Parallelization: Wave 2 | Blocked by: 1, 3 | Blocks: 前端认证
   References: Drogon AOP过滤器文档, JWT RFC 7519
@@ -161,7 +161,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 登录→签发token→访问受保护接口→刷新token；failure - 过期token返回401，错误密码返回403。**Redis故障防护：如果Redis不可用，认证服务降级为fail-closed（拒绝所有请求，直到Redis恢复），记录告警日志。** Evidence .omo/evidence/task-5-idc-platform-v1.log
   Commit: Y | feat(auth): implement JWT auth and RBAC filters with Redis fail-closed
 
-- [ ] 6. 前端登录+路由守卫+动态路由
+- [x] 6. 前端登录+路由守卫+动态路由
   What to do / Must NOT do: 实现登录页（Element Plus 表单组件），Pinia auth store（存token、用户信息、权限）。Vue Router 导航守卫（beforeEach：未登录→/login，已登录自动添加动态路由）。实现 layout 布局组件（侧边栏根据权限动态生成菜单，顶栏显示用户信息+退出）。
   Parallelization: Wave 2 | Blocked by: 2, 5 | Blocks: 前端业务页面
   References: Vue Router 导航守卫 - https://router.vuejs.org/guide/advanced/navigation-guards.html , Pinia文档 - https://pinia.vuejs.org/
@@ -169,7 +169,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 登录→跳转首页→动态菜单生成；failure - token失效→跳回登录页。Evidence .omo/evidence/task-6-idc-platform-v1.log
   Commit: Y | feat(frontend): implement auth flow and route guards
 
-- [ ] 7. 经销商管理（后端+前端管理员页面）
+- [x] 7. 经销商管理（后端+前端管理员页面）
   What to do / Must NOT do: 后端：经销商 CRUD API（GET/POST/PUT /api/v1/distributors），组织树 API（GET /distributors/:id/tree 递归返回所有下级），多级关系维护（parent_id 自引用）。前端：管理员→经销商管理页面（Element Plus 表格+树形选择器），创建/编辑表单，组织树可视化组件。
   Parallelization: Wave 2 | Blocked by: 3, 5 | Blocks: 价格模板
   References: PostgreSQL 递归查询（WITH RECURSIVE）用于组织树
@@ -177,7 +177,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 创建→修改→删除→查询树；failure - 删除有关联的经销商时拒绝。Evidence .omo/evidence/task-7-idc-platform-v1.log
   Commit: Y | feat(distributor): implement distributor CRUD and organization tree
 
-- [ ] 8. 产品目录+多级价格模板（后端+前端）
+- [x] 8. 产品目录+多级价格模板（后端+前端）
   What to do / Must NOT do: 后端：产品 CRUD API（type: bare_metal/cloud/bandwidth/ip/addon，specs: JSONB），价格模板API（模板CRUD，产品定价CRUD，支持继承/覆盖/有效期），价格查询API（根据经销商等级返回对应价格）。前端：管理员→产品管理页面，价格模板配置页，经销商查看价格页面。
   Parallelization: Wave 2 | Blocked by: 3 | Blocks: 订单
   References: PostgreSQL JSONB 查询文档

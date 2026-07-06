@@ -27,27 +27,24 @@ class ErrorHandler {
 public:
     /// Register the global exception handler on the app framework.
     static void init() {
-        // ── std::exception handler (covers DrogonException, orm exceptions) ─
-        drogon::app().setCustomExceptionHandler(
+        // ── Global exception handler ───────────────────────────────────────
+        drogon::app().setExceptionHandler(
             [](const std::exception& ex,
-               const drogon::HttpRequestPtr& req) -> drogon::HttpResponsePtr {
+               const drogon::HttpRequestPtr& req,
+               std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
                 LOG_ERROR << "[ErrorHandler] Unhandled exception: " << ex.what()
                           << " | request: " << (req ? req->path() : "(null)");
 
-                return JsonResponse::serverError(ex.what());
+                callback(JsonResponse::serverError(ex.what()));
             });
 
-        // ── Register a middleware to catch non-std::exception throws ────────
-        //     (bare strings, ints, etc.) that the custom handler can't reach.
+        // ── Middleware to catch unknown exception types ────────────────────
         drogon::app().registerPreRoutingAdvice(
             [](const drogon::HttpRequestPtr& req,
                drogon::AdviceCallback&&        callback,
                drogon::AdviceChainCallback&&    chained) {
                 try {
                     chained();
-                } catch (const drogon::DrogonException& e) {
-                    LOG_ERROR << "[ErrorHandler] DrogonException: " << e.what();
-                    callback(JsonResponse::serverError(e.what()));
                 } catch (const std::exception& e) {
                     LOG_ERROR << "[ErrorHandler] std::exception: " << e.what();
                     callback(JsonResponse::serverError(e.what()));

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <drogon/nosql/RedisClient.h>
+#include <drogon/nosql/RedisResult.h>
+#include <drogon/nosql/RedisException.h>
+
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -10,10 +13,11 @@
 
 namespace idc {
 
-/// RedisClient convenience wrapper.
+/// RedisClient convenience wrapper — Drogon v1.9.10 compatible.
 ///
 /// All methods are best-effort: if Redis is unavailable or returns an error,
-/// they log a warning and return an empty / false result (graceful degradation).
+/// they log a warning and return an empty / false result (graceful degradation)
+/// UNLESS they are used in the auth flow, which has its own fail-closed logic.
 ///
 /// Usage:
 ///   RedisClient::set("key", "value");
@@ -44,17 +48,22 @@ public:
     }
 
     /// Set a key with an expiry TTL (seconds).
-    static bool setex(const std::string& key, int ttl, const std::string& value) {
+    static bool setex(const std::string& key, int ttl,
+                      const std::string& value) {
         return exec("SETEX %s %d %s", key, ttl, value);
     }
 
     /// Get the string value of a key.
     static std::optional<std::string> get(const std::string& key) {
         try {
-            auto res = getClient()->execCommandSync("GET %s", key.c_str());
-            if (res && res->type() != drogon::nosql::RedisResultType::kNil) {
-                return res->asString();
-            }
+            auto result = getClient()->execCommandSync<std::string>(
+                [](const drogon::nosql::RedisResult& r) -> std::string {
+                    if (r.isNil()) return {};
+                    return r.asString();
+                },
+                "GET %s", key.c_str());
+            if (result.empty()) return std::nullopt;
+            return result;
         } catch (const std::exception& e) {
             LOG_WARN << "[RedisClient] GET " << key << " failed: " << e.what();
         }
@@ -64,8 +73,9 @@ public:
     /// Delete one or more keys. Returns number of keys removed.
     static int64_t del(const std::string& key) {
         try {
-            auto res = getClient()->execCommandSync("DEL %s", key.c_str());
-            if (res) return res->asInteger();
+            return getClient()->execCommandSync<int64_t>(
+                [](const drogon::nosql::RedisResult& r) { return r.asInteger(); },
+                "DEL %s", key.c_str());
         } catch (const std::exception& e) {
             LOG_WARN << "[RedisClient] DEL " << key << " failed: " << e.what();
         }
@@ -75,10 +85,13 @@ public:
     /// Set a TTL (seconds) on a key. Returns true if the timeout was set.
     static bool expire(const std::string& key, int ttl) {
         try {
-            auto res = getClient()->execCommandSync("EXPIRE %s %d", key.c_str(), ttl);
-            return res && res->asInteger() > 0;
+            auto n = getClient()->execCommandSync<int64_t>(
+                [](const drogon::nosql::RedisResult& r) { return r.asInteger(); },
+                "EXPIRE %s %d", key.c_str(), ttl);
+            return n > 0;
         } catch (const std::exception& e) {
-            LOG_WARN << "[RedisClient] EXPIRE " << key << " failed: " << e.what();
+            LOG_WARN << "[RedisClient] EXPIRE " << key << " failed: "
+                     << e.what();
         }
         return false;
     }
@@ -86,10 +99,13 @@ public:
     /// Check if a key exists.
     static bool exists(const std::string& key) {
         try {
-            auto res = getClient()->execCommandSync("EXISTS %s", key.c_str());
-            return res && res->asInteger() > 0;
+            auto n = getClient()->execCommandSync<int64_t>(
+                [](const drogon::nosql::RedisResult& r) { return r.asInteger(); },
+                "EXISTS %s", key.c_str());
+            return n > 0;
         } catch (const std::exception& e) {
-            LOG_WARN << "[RedisClient] EXISTS " << key << " failed: " << e.what();
+            LOG_WARN << "[RedisClient] EXISTS " << key << " failed: "
+                     << e.what();
         }
         return false;
     }
@@ -101,7 +117,10 @@ public:
         /// @param key   Resource key (auto-prefixed with "lock:").
         /// @param ttl   Lock expiry in seconds (auto-release safety net).
         explicit Lock(const std::string& key, int ttl = 30)
-            : key_("lock:" + key), ttl_(ttl), token_(generateToken()), acquired_(false) {}
+            : key_("lock:" + key),
+              ttl_(ttl),
+              token_(generateToken()),
+              acquired_(false) {}
 
         ~Lock() {
             if (acquired_) release();
@@ -110,10 +129,14 @@ public:
         /// Acquire the lock (blocking, best-effort).
         bool acquire() {
             try {
-                auto res = getClient()->execCommandSync(
+                auto result = getClient()->execCommandSync<std::string>(
+                    [](const drogon::nosql::RedisResult& r) -> std::string {
+                        if (r.isNil()) return {};
+                        return r.asString();
+                    },
                     "SET %s %s NX EX %d",
                     key_.c_str(), token_.c_str(), ttl_);
-                acquired_ = res && res->asString() == "OK";
+                acquired_ = (result == "OK");
                 return acquired_;
             } catch (const std::exception& e) {
                 LOG_WARN << "[RedisClient] Lock acquire " << key_ << " failed: "
@@ -133,8 +156,10 @@ public:
                     "else "
                     "  return 0 "
                     "end";
-                getClient()->execCommandSync(
-                    "EVAL %s 1 %s %s", script, key_.c_str(), token_.c_str());
+                getClient()->execCommandSync<int64_t>(
+                    [](const drogon::nosql::RedisResult&) { return 0; },
+                    "EVAL %s 1 %s %s",
+                    script, key_.c_str(), token_.c_str());
             } catch (const std::exception& e) {
                 LOG_WARN << "[RedisClient] Lock release " << key_ << " failed: "
                          << e.what();
@@ -145,7 +170,7 @@ public:
         bool isAcquired() const { return acquired_; }
 
         // Non-copyable, movable
-        Lock(const Lock&)            = delete;
+        Lock(const Lock&) = delete;
         Lock& operator=(const Lock&) = delete;
         Lock(Lock&& other) noexcept
             : key_(std::move(other.key_)),
@@ -184,12 +209,17 @@ private:
     RedisClient() = delete;
 
     /// Execute a non-result Redis command (SET, SETEX, etc.).
+    /// Returns true if the result string is "OK".
     template <typename... Args>
     static bool exec(const char* fmt, const std::string& key, Args&&... args) {
         try {
-            auto res = getClient()->execCommandSync(fmt, key.c_str(),
-                                                    std::forward<Args>(args)...);
-            return res && res->asString() == "OK";
+            auto result = getClient()->execCommandSync<std::string>(
+                [](const drogon::nosql::RedisResult& r) -> std::string {
+                    if (r.isNil()) return {};
+                    return r.asString();
+                },
+                fmt, key.c_str(), std::forward<Args>(args)...);
+            return result == "OK";
         } catch (const std::exception& e) {
             LOG_WARN << "[RedisClient] command failed: " << e.what();
         }

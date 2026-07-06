@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { Expand, Fold } from '@element-plus/icons-vue'
 
-const router = useRouter()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 
@@ -14,7 +12,6 @@ function toggleSidebar() {
 
 function handleLogout() {
   authStore.logout()
-  router.push({ name: 'Login' })
 }
 </script>
 

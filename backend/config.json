@@ -23,6 +23,10 @@
             "timeout": 5.0
         }
     ],
+    "jwt": {
+        "secret": "idc-platform-jwt-secret-change-in-production",
+        "expires_in": 86400
+    },
     "redis_clients": [
         {
             "name": "idc_redis",

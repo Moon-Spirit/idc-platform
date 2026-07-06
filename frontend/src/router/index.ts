@@ -20,6 +20,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/DashboardView.vue'),
         meta: { title: '仪表盘', icon: 'Odometer' },
       },
+      {
+        path: 'admin/distributors',
+        name: 'DistributorList',
+        component: () => import('@/views/admin/distributor/DistributorList.vue'),
+        meta: { title: '经销商管理', icon: 'UserFilled' },
+      },
+      {
+        path: 'admin/distributors/:id',
+        name: 'DistributorDetail',
+        component: () => import('@/views/admin/distributor/DistributorDetail.vue'),
+        meta: { title: '经销商详情', hidden: true },
+      },
     ],
   },
 ]
