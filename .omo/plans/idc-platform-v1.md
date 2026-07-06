@@ -195,7 +195,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 组合产品下单→审核→状态流转完成；failure - 库存不足下单被拒绝。**注意：第一期库存使用本地模拟数据（硬编码充足库存），第5波智简魔方对接后再替换为真实库存校验逻辑。** Evidence .omo/evidence/task-9-idc-platform-v1.log
   Commit: Y | feat(order): implement order lifecycle with state machine
 
-- [ ] 10. 前端下单页面+订单管理
+- [x] 10. 前端下单页面+订单管理
   What to do / Must NOT do: 经销商门户：产品选购页面（产品列表+详情+配置面板→加入购物车），购物车组件（展示已选产品/数量/价格），下单页面（确认订单→选择周期→提交）。订单列表页（筛选/分页），订单详情页（状态跟踪、产品明细）。管理员：订单审核页面（待审列表→审核通过/驳回）。
   Parallelization: Wave 3 | Blocked by: 6, 9 | Blocks: -
   References: Element Plus Table/Form/Dialog 文档, Playwright E2E测试 - https://playwright.dev/
@@ -203,7 +203,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 完整下单流程走通；failure - 表单校验不通过时提示准确。Evidence .omo/evidence/task-10-idc-platform-v1.log
   Commit: Y | feat(frontend): implement order flow (cart → submit → review)
 
-- [ ] 11. 订阅/服务实例管理
+- [x] 11. 订阅/服务实例管理
   What to do / Must NOT do: 订单审核通过后自动创建 Subscription（服务实例）。订阅生命周期管理（暂停/恢复/终止API），订阅列表+详情API。自动续费逻辑（到期前通知+自动扣款）。服务升降配逻辑（提交变更→审核→执行变更→更新订阅）。
   Parallelization: Wave 3 | Blocked by: 9 | Blocks: 计费
   References: Drogon定时任务文档

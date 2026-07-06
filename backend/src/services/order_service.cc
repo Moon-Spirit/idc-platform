@@ -586,31 +586,85 @@ Json::Value OrderService::transitionOrder(int64_t orderId,
 
         // If approving, update subscriptions from pending to provisioning
         if (toState == OrderStates::kApproved) {
+            // Get affected subscription IDs for timeline recording
+            auto subRows = trans.execSqlSync(
+                "SELECT id, sub_no FROM subscriptions "
+                "WHERE order_id = $1 AND status = 'pending'", orderId);
+
             trans.execSqlSync(
                 "UPDATE subscriptions SET status = 'provisioning', "
                 "provision_status = 'provisioning', updated_at = NOW() "
                 "WHERE order_id = $1 AND status = 'pending'",
                 orderId);
+
+            // Record subscription timeline entries
+            for (const auto& srow : subRows) {
+                trans.execSqlSync(
+                    "INSERT INTO subscription_timeline "
+                    "(subscription_id, from_status, to_status, "
+                    "operator_id, operator_name, remark) "
+                    "VALUES ($1, 'pending', 'provisioning', $2, $3, '订单审核通过，开始开通服务')",
+                    srow["id"].as<int64_t>(), operatorId, operatorName);
+            }
         }
 
         // If transitioning to active, update subscriptions
         if (toState == OrderStates::kActive) {
+            // Get affected subscription IDs for timeline recording
+            auto subRows = trans.execSqlSync(
+                "SELECT id, sub_no, status FROM subscriptions "
+                "WHERE order_id = $1", orderId);
+
             trans.execSqlSync(
                 "UPDATE subscriptions SET status = 'active', "
                 "provision_status = 'done', start_date = CURRENT_DATE, "
                 "updated_at = NOW() "
                 "WHERE order_id = $1",
                 orderId);
+
+            // Record subscription timeline entries
+            for (const auto& srow : subRows) {
+                trans.execSqlSync(
+                    "INSERT INTO subscription_timeline "
+                    "(subscription_id, from_status, to_status, "
+                    "operator_id, operator_name, remark) "
+                    "VALUES ($1, $2, 'active', $3, $4, '服务开通完成')",
+                    srow["id"].as<int64_t>(),
+                    srow["status"].as<std::string>(),
+                    operatorId, operatorName);
+            }
         }
 
         // If cancelled, update subscriptions accordingly
         if (toState == OrderStates::kCancelled || toState == OrderStates::kTerminated) {
             std::string subStatus = (toState == OrderStates::kCancelled)
                 ? "cancelled" : "terminated";
+            std::string tlRemark = (toState == OrderStates::kCancelled)
+                ? "订单已取消，订阅同步取消" : "订单已终止，订阅同步终止";
+
+            // Get affected subscription IDs for timeline recording
+            auto subRows = trans.execSqlSync(
+                "SELECT id, sub_no, status FROM subscriptions "
+                "WHERE order_id = $1", orderId);
+
             trans.execSqlSync(
                 "UPDATE subscriptions SET status = $1, updated_at = NOW() "
                 "WHERE order_id = $2",
                 subStatus, orderId);
+
+            // Record subscription timeline entries
+            for (const auto& srow : subRows) {
+                trans.execSqlSync(
+                    "INSERT INTO subscription_timeline "
+                    "(subscription_id, from_status, to_status, "
+                    "operator_id, operator_name, remark) "
+                    "VALUES ($1, $2, $3, $4, $5, $6)",
+                    srow["id"].as<int64_t>(),
+                    srow["status"].as<std::string>(),
+                    subStatus,
+                    operatorId, operatorName,
+                    tlRemark);
+            }
         }
 
         // Build result
