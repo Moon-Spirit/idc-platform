@@ -213,7 +213,7 @@ Your next move: 审阅计划后启动执行。
 
 ### Wave 4: 计费引擎 (第7-8周)
 
-- [ ] 12. 计费引擎核心—月付/年付
+- [x] 12. 计费引擎核心—月付/年付
   What to do / Must NOT do: 实现周期性计费逻辑：每月1日生成所有活跃订阅的月账单（prorata处理首月不足月情况），年付按年生成。支持自动折扣（年付=月付*10）。计费规则配置化（可配置每月几号出账、付款期限）。实现计费任务调度器（Drogon定时任务，每日检查哪些订阅需要出账）。
   Parallelization: Wave 4 | Blocked by: 11 | Blocks: 账单
   References: Drogon定时任务 - https://drogonframework.github.io/drogon-docs/#/AOP/定时任务
@@ -221,7 +221,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 月付/年付都生成正确金额；failure - 已暂停的订阅不应生成新账单。Evidence .omo/evidence/task-12-idc-platform-v1.log
   Commit: Y | feat(billing): implement recurring monthly/yearly billing
 
-- [ ] 13. 95分位带宽计费
+- [x] 13. 95分位带宽计费
   What to do / Must NOT do: 实现带宽采样数据入库（模拟或对接智简魔方获取5分钟粒度的带宽数据），写入 bandwidth_samples hypertable。月底执行95计费计算：每个订阅一个月内的采样数据排序→去掉前5%→取最高值→乘以单价=带宽费。支持多端口/多IP的分开计费。提供带宽用量查询API和图表数据接口（供前端WebSocket实时推送用）。
   Parallelization: Wave 4 | Blocked by: 3 (TimescaleDB) | Blocks: 账单汇总
   References: TimescaleDB hypertable + percentile_cont文档, DrPeering 95th percentile白皮书
@@ -229,7 +229,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 算法结果与手动计算一致（提供测试数据/预期值的JSON fixture）；failure - 采样数据不足时降级为平均计费。Evidence .omo/evidence/task-13-idc-platform-v1.log
   Commit: Y | feat(billing): implement 95th percentile bandwidth billing
 
-- [ ] 14. 按量计费+增值服务
+- [x] 14. 按量计费+增值服务
   What to do / Must NOT do: 按量计费：计时器（记录云服务器运行时长），费率表（CPU/内存/磁盘/流量单价），月末汇总=时长*费率。增值服务prorata（如额外IP、DDOS防护在月中加购，按剩余天数比例计费）。所有计费记录持久化到 billing_records 表。
   Parallelization: Wave 4 | Blocked by: 11 | Blocks: 账单汇总
   References: - 

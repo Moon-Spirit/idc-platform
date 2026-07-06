@@ -4,8 +4,11 @@
 #include "utils/config.h"
 
 #include "controllers/auth_controller.h"
+#include "controllers/bandwidth_controller.h"
 #include "controllers/distributor_controller.h"
 #include "controllers/user_controller.h"
+#include "controllers/billing_controller.h"
+#include "cron/billing_cron.h"
 
 #include <iostream>
 
@@ -76,6 +79,9 @@ int main() {
         LOG_WARN << "[Startup] Redis client 'idc_redis' unavailable: "
                  << e.what() << " — running in degraded mode";
     }
+
+    // ── Register billing cron (daily check for billing day) ───────────────
+    idc::BillingCron::init();
 
     // ── Start server ─────────────────────────────────────────────────────────
     std::cout << "IDC Platform API Server started on port 8080" << std::endl;
