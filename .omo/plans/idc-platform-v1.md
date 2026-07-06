@@ -237,7 +237,7 @@ Your next move: 审阅计划后启动执行。
   QA scenarios: happy - 按量精准计费；failure - 并发扣费防超扣（乐观锁）。Evidence .omo/evidence/task-14-idc-platform-v1.log
   Commit: Y | feat(billing): implement hourly metered billing and addon prorata
 
-- [ ] 15. 账单生成+PDF+催缴
+- [x] 15. 账单生成+PDF+催缴
   What to do / Must NOT do: 账单汇总结算：合并月付+年付+95带宽+按量+增值→生成一张 Invoice。支持分期调整、折扣、优惠券入口预留。PDF账单生成（使用 libharu 或 wkhtmltopdf 生成中文PDF）。催缴流程：到期前3天邮件/站内信提醒→到期日→逾期第1天、第3天、第7天逐步升级提醒→逾期15天自动暂停服务→逾期30天终止。
   Parallelization: Wave 4 | Blocked by: 12, 13, 14 | Blocks: 支付
   References: Gotenberg - https://gotenberg.dev/ , wkhtmltopdf 已不推荐（最后更新2023-01，CJK渲染不可靠）

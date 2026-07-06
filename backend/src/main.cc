@@ -8,7 +8,9 @@
 #include "controllers/distributor_controller.h"
 #include "controllers/user_controller.h"
 #include "controllers/billing_controller.h"
+#include "controllers/invoice_controller.h"
 #include "cron/billing_cron.h"
+#include "cron/dunning_cron.h"
 
 #include <iostream>
 
@@ -82,6 +84,9 @@ int main() {
 
     // ── Register billing cron (daily check for billing day) ───────────────
     idc::BillingCron::init();
+
+    // ── Register dunning cron (daily check for overdue invoices) ──────────
+    idc::DunningCron::init();
 
     // ── Start server ─────────────────────────────────────────────────────────
     std::cout << "IDC Platform API Server started on port 8080" << std::endl;
