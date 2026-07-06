@@ -58,6 +58,15 @@ void BalanceController::getBalance(
         if (distributorId <= 0) {
             distributorId = getUserDistributorId(userId);
             if (distributorId <= 0) {
+                if (isAdmin) {
+                    // Admin users may not have a distributor; return zero balance
+                    Json::Value zeroBalance;
+                    zeroBalance["balance"] = "0.00";
+                    zeroBalance["credit_limit"] = "0.00";
+                    zeroBalance["distributor_id"] = Json::nullValue;
+                    callback(JsonResponse::ok(zeroBalance));
+                    return;
+                }
                 callback(JsonResponse::error(403,
                     "No distributor account associated with this user"));
                 return;

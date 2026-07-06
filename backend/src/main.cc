@@ -11,6 +11,7 @@
 #include "controllers/invoice_controller.h"
 #include "controllers/payment_controller.h"
 #include "controllers/balance_controller.h"
+#include "controllers/dashboard_controller.h"
 #include "controllers/zjmf_controller.h"
 #include "controllers/provisioning_controller.h"
 #include "cron/billing_cron.h"
@@ -18,6 +19,8 @@
 #include "cron/zjmf_sync_cron.h"
 #include "services/zjmf_adapter.h"
 #include "services/zjmf_provisioning_service.h"
+#include "filters/jwt_filter.h"
+#include "filters/rbac_filter.h"
 
 #include <fstream>
 #include <iostream>
@@ -52,6 +55,91 @@ int main() {
 
     // ── Load JWT config from custom section ─────────────────────────────────
     idc::Config::init();
+
+    // ── Helper: register a param-name → factory in DrClassMap ──────────────
+    static auto registerParamFilter =
+        [](const std::string& name, const std::string& param) {
+            drogon::DrClassMap::registerClass(
+                name,
+                [param]() -> drogon::DrObjectBase* {
+                    return new idc::RBACFilter(param);
+                },
+                [param]() -> std::shared_ptr<drogon::DrObjectBase> {
+                    return std::make_shared<idc::RBACFilter>(param);
+                });
+        };
+
+    // ── Register filters explicitly (CRTP auto-registration unreliable) ─────
+    drogon::app().registerFilter(std::make_shared<idc::JWTFilter>());
+    drogon::app().registerFilter(std::make_shared<idc::RBACFilter>(""));
+    // Short names for controller macros ("JWTFilter")
+    drogon::DrClassMap::registerClass(
+        "JWTFilter",
+        []() -> drogon::DrObjectBase* { return new idc::JWTFilter(); },
+        []() -> std::shared_ptr<drogon::DrObjectBase> {
+            return std::make_shared<idc::JWTFilter>();
+        });
+
+    // Base RBACFilter name (no-arg)
+    registerParamFilter("RBACFilter", "");
+
+    // RBACFilter(permission:code) — one registration per permission code used
+    // by controllers. Drogon parses "RBACFilter(user:list)" into filter name
+    // "RBACFilter" with parameter "user:list".
+    const std::vector<std::string> rbacPermissions = {
+        // distributor
+        "distributor:create",  "distributor:delete",  "distributor:list",
+        "distributor:read",    "distributor:settlement", "distributor:update",
+        // invoice
+        "invoice:create",  "invoice:delete",  "invoice:export",
+        "invoice:generate", "invoice:list",   "invoice:pay",
+        "invoice:read",     "invoice:update",  "invoice:void",
+        // metered
+        "metered:read", "metered:write",
+        // addon
+        "addon:read", "addon:write",
+        // order
+        "order:approve", "order:create", "order:delete",
+        "order:list",    "order:read",   "order:reject",
+        "order:update",
+        // payment
+        "payment:list", "payment:read", "payment:refund",
+        // price
+        "price:create", "price:delete", "price:list",
+        "price:read",   "price:update",
+        // product
+        "product:create", "product:delete", "product:list",
+        "product:read",   "product:update",
+        // provisioning
+        "provisioning:read", "provisioning:retry",
+        // subscription
+        "subscription:create", "subscription:delete", "subscription:list",
+        "subscription:provision", "subscription:read", "subscription:suspend",
+        "subscription:terminate", "subscription:update",
+        // sync
+        "sync:config", "sync:read", "sync:trigger",
+        // user
+        "user:create", "user:delete", "user:list",
+        "user:read",   "user:update",
+        // billing
+        "billing:read", "billing:run",
+        // dunning
+        "dunning:run",
+        // permission
+        "permission:list", "permission:read",
+        // role
+        "role:create", "role:delete", "role:list",
+        "role:read",   "role:update",
+        // operation
+        "operation:list", "operation:read",
+        // report
+        "report:export", "report:read",
+        // system
+        "system:read", "system:update",
+    };
+    for (const auto& p : rbacPermissions) {
+        registerParamFilter("RBACFilter(" + p + ")", p);
+    }
 
     // ── Register global error handler ────────────────────────────────────────
     idc::ErrorHandler::init();
@@ -99,20 +187,6 @@ int main() {
             resp->addHeader("X-Request-ID",
                             idc::Logger::getRequestId(req));
         });
-
-    // ── Warn about Redis but do not block startup ────────────────────────────
-    //     Drogon will try to connect lazily; if the pool is empty we log a
-    //     note so operators know Redis is in degraded mode.
-    try {
-        auto redis = drogon::app().getRedisClient("idc_redis");
-        if (!redis) {
-            LOG_WARN << "[Startup] Redis client 'idc_redis' not available — "
-                        "running in degraded mode";
-        }
-    } catch (const std::exception& e) {
-        LOG_WARN << "[Startup] Redis client 'idc_redis' unavailable: "
-                 << e.what() << " — running in degraded mode";
-    }
 
     // ── Register billing cron (daily check for billing day) ───────────────
     idc::BillingCron::init();

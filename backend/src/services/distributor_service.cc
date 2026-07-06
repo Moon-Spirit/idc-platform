@@ -117,9 +117,9 @@ Json::Value DistributorService::listDistributors(
         "SELECT d.*,"
         "  (SELECT COUNT(*) FROM distributors ch WHERE ch.parent_id = d.id) AS children_count"
         " FROM distributors d " + where +
-        " ORDER BY d.id DESC LIMIT $1 OFFSET $2";
+        " ORDER BY d.id DESC LIMIT " + std::to_string(per_page) + " OFFSET " + std::to_string(offset);
 
-    auto dataResult = db->execSqlSync(dataSql, per_page, offset);
+    auto dataResult = db->execSqlSync(dataSql);
 
     Json::Value items(Json::arrayValue);
     for (const auto& row : dataResult) {

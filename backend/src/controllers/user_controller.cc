@@ -71,28 +71,28 @@ void UserController::listUsers(
             "       r.name AS role_name "
             + baseJoin;
 
-        // Execute DB queries — use move-assignable Result objects
+        // Execute DB queries — inline all values to avoid Drogon PG bind issues
         bool hasKeyword = !keyword.empty();
-        std::string likeClause, pattern;
+        std::string likeClause;
         if (hasKeyword) {
+            // Escape single quotes in keyword for inline SQL
+            std::string kw = keyword;
+            for (size_t i = 0; i < kw.size(); ++i) {
+                if (kw[i] == '\'') { kw.insert(i, "'"); ++i; }
+            }
+            std::string pattern = "%" + kw + "%";
             likeClause =
-                " AND (u.username ILIKE $1 OR u.real_name ILIKE $1 "
-                "       OR u.email ILIKE $1 OR u.phone ILIKE $1)";
-            pattern = "%" + keyword + "%";
+                " AND (u.username ILIKE '" + pattern + "'"
+                " OR u.real_name ILIKE '" + pattern + "'"
+                " OR u.email ILIKE '" + pattern + "'"
+                " OR u.phone ILIKE '" + pattern + "')";
         }
 
-        auto countRes = hasKeyword
-            ? db->execSqlSync(countSql + likeClause, pattern)
-            : db->execSqlSync(countSql + ";");
-        auto rows = hasKeyword
-            ? db->execSqlSync(
-                  listSql + likeClause +
-                      " ORDER BY u.created_at DESC LIMIT $2 OFFSET $3",
-                  pattern, perPage, offset)
-            : db->execSqlSync(
-                  listSql +
-                      " ORDER BY u.created_at DESC LIMIT $1 OFFSET $2;",
-                  perPage, offset);
+        auto countRes = db->execSqlSync(countSql + likeClause + ";");
+        auto rows = db->execSqlSync(
+            listSql + likeClause +
+            " ORDER BY u.created_at DESC LIMIT " + std::to_string(perPage) +
+            " OFFSET " + std::to_string(offset) + ";");
 
         int64_t total = countRes[0]["total"].as<int64_t>();
 

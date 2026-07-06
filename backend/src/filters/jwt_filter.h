@@ -17,7 +17,7 @@ namespace idc {
 ///   401 — missing / invalid / expired token
 ///   401 — blacklisted token
 ///   503 — Redis unavailable (fail-closed)
-class JWTFilter : public drogon::HttpFilter<JWTFilter> {
+class JWTFilter : public drogon::HttpFilter<JWTFilter, false> {
 public:
     JWTFilter() = default;
 

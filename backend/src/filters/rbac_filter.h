@@ -19,7 +19,7 @@ namespace idc {
 /// On failure:
 ///   403 — role lacks the required permission
 ///   503 — database unavailable
-class RBACFilter : public drogon::HttpFilter<RBACFilter> {
+class RBACFilter : public drogon::HttpFilter<RBACFilter, false> {
 public:
     /// Default constructor (required by Drogon for parameterless usage).
     RBACFilter() = default;

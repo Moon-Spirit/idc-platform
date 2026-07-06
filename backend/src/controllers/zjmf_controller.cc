@@ -195,9 +195,9 @@ void ZJMFController::getSyncLogs(
             "FROM zjmf_sync_logs zsl "
             "LEFT JOIN zjmf_connections zc ON zc.id = zsl.connection_id " +
             whereClause +
-            " ORDER BY zsl.id DESC LIMIT $1 OFFSET $2";
+            " ORDER BY zsl.id DESC LIMIT " + std::to_string(perPage) + " OFFSET " + std::to_string(offsetVal);
 
-        auto dataResult = db->execSqlSync(dataSql, perPage, offsetVal);
+        auto dataResult = db->execSqlSync(dataSql);
 
         Json::Value items(Json::arrayValue);
         for (const auto& row : dataResult) {
@@ -325,8 +325,8 @@ Json::Value ZJMFController::processWebhook(
                 result["subscription_id"] = provResult["subscription_id"];
                 result["provision_status"] = provResult["provision_status"];
                 LOG_INFO << "[ZJMFController] Webhook: provisioning update processed "
-                         << "sub_id=" << provResult["subscription_id"]
-                         << " status=" << provResult["provision_status"];
+                         << "sub_id=" << provResult["subscription_id"].asString()
+                         << " status=" << provResult["provision_status"].asString();
             } else {
                 result["processed"] = false;
                 result["note"] = provResult.get("note", provResult.get("error", "Unknown"));
