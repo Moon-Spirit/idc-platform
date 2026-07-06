@@ -68,6 +68,7 @@ export interface InstallResult {
   steps: InstallStep[]
   admin_username: string
   message: string
+  install_secret?: string
 }
 
 export interface SetupStatus {

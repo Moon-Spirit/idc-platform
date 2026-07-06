@@ -1,5 +1,6 @@
 #include "setup_controller.h"
 
+#include "utils/db_client.h"
 #include "utils/response.h"
 #include "utils/logger.h"
 
@@ -10,12 +11,32 @@
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
 
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <string>
 
 namespace idc {
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+static std::string generateInstallSecret() {
+    // 16 random bytes → 32 hex chars → truncate to first 16 hex chars
+    // Actually: 8 bytes of urandom → 16 hex characters
+    std::array<unsigned char, 8> buf{};
+    std::ifstream urandom("/dev/urandom", std::ios::binary);
+    if (urandom) {
+        urandom.read(reinterpret_cast<char*>(buf.data()), buf.size());
+    }
+    static const char kHex[] = "0123456789abcdef";
+    std::string result(16, ' ');
+    for (int i = 0; i < 8; ++i) {
+        result[i * 2]     = kHex[(buf[i] >> 4) & 0x0f];
+        result[i * 2 + 1] = kHex[buf[i] & 0x0f];
+    }
+    return result;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  POST /api/v1/setup/check-env — 检测系统环境
@@ -168,11 +189,28 @@ void SetupController::runInstall(
     addStep("写入配置");
     addStep("完成");
 
+    // ── Generate and persist install_secret ─────────────────────────────
+    std::string installSecret = generateInstallSecret();
+    try {
+        auto db = DbClient::getClient();
+        db->execSqlSync(
+            "INSERT INTO system_config (key, value, description) "
+            "VALUES ($1, $2, $3) "
+            "ON CONFLICT (key) DO UPDATE SET "
+            "  value = EXCLUDED.value, updated_at = NOW()",
+            "install_secret", installSecret,
+            "Installation secret — path prefix for API security");
+        LOG_INFO << "[Setup] install_secret stored in system_config";
+    } catch (const std::exception& e) {
+        LOG_ERROR << "[Setup] Failed to store install_secret: " << e.what();
+    }
+
     Json::Value data;
     data["success"]        = true;
     data["steps"]          = steps;
     data["admin_username"] = adminUsername;
     data["message"]        = "安装完成，系统已准备就绪";
+    data["install_secret"] = installSecret;
 
     LOG_INFO << "[Setup] Installation completed for admin: " << adminUsername;
     callback(JsonResponse::ok(data));
@@ -188,7 +226,16 @@ void SetupController::status(
     Json::Value data;
     data["installed"] = false;
 
-    // TODO: read config.json to determine actual installed state
+    try {
+        auto db = DbClient::getClient();
+        auto rows = db->execSqlSync(
+            "SELECT 1 FROM system_config WHERE key = 'install_secret'");
+        data["installed"] = !rows.empty();
+    } catch (const std::exception& e) {
+        LOG_WARN << "[Setup] status check failed (DB not ready?): " << e.what();
+        // DB not available → treat as not installed
+    }
+
     callback(JsonResponse::ok(data));
 }
 

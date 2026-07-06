@@ -11,13 +11,20 @@ const request: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor: attach Authorization header
+// Request interceptor: attach Authorization header & install_secret path prefix
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token')
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // After installation, all API calls must be prefixed with the install_secret
+    const secret = localStorage.getItem('install_secret')
+    if (secret && config.url) {
+      config.url = `/${secret}${config.url}`
+    }
+
     return config
   },
   (error) => {

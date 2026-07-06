@@ -35,3 +35,5 @@ backend/orm/
 
 # OMO system artifacts
 .omo/run-continuation/
+
+.omo

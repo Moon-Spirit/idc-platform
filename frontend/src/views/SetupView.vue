@@ -201,6 +201,16 @@ function copyJwtSecret(): void {
   })
 }
 
+function copyInstallSecret(): void {
+  if (installResult.value?.install_secret) {
+    navigator.clipboard.writeText(installResult.value.install_secret).then(() => {
+      ElMessage.success('已复制到剪贴板')
+    }).catch(() => {
+      ElMessage.error('复制失败，请手动复制')
+    })
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * Step 0: Environment check
  * ═════════════════════════════════════════════════════════════════════════ */
@@ -312,6 +322,10 @@ async function executeInstall(): Promise<void> {
     }
 
     installResult.value = result
+    // Store install_secret for subsequent API calls
+    if (result.install_secret) {
+      localStorage.setItem('install_secret', result.install_secret)
+    }
     await delay(500)
     activeStep.value = 5
   } catch (e) {
@@ -846,6 +860,30 @@ onMounted(async () => {
                 <p><strong>用户名：</strong>{{ installResult.admin_username }}</p>
                 <p><strong>密码：</strong><em>（您设置的密码）</em></p>
               </div>
+
+              <el-divider v-if="installResult.install_secret" />
+
+              <div v-if="installResult.install_secret" class="result-secret">
+                <h4>安装密钥（请妥善保管）</h4>
+                <p class="secret-desc">
+                  该密钥会自动附加到所有 API 请求路径中，防止未授权访问。
+                  如果丢失，请联系系统管理员。
+                </p>
+                <el-input
+                  :model-value="installResult.install_secret"
+                  readonly
+                  class="secret-input"
+                >
+                  <template #append>
+                    <el-button
+                      @click="copyInstallSecret"
+                      :icon="CopyDocument"
+                    >
+                      复制
+                    </el-button>
+                  </template>
+                </el-input>
+              </div>
             </div>
 
             <el-button type="primary" size="large" @click="goToLogin">
@@ -1100,6 +1138,27 @@ onMounted(async () => {
   margin: 6px 0;
   font-size: 14px;
   color: var(--el-text-color-regular);
+}
+
+.result-secret {
+  margin-top: 8px;
+}
+
+.result-secret h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--el-text-color-primary);
+}
+
+.secret-desc {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  line-height: 1.5;
+}
+
+.secret-input {
+  max-width: 100%;
 }
 
 .error-message {
