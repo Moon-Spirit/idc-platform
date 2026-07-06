@@ -187,7 +187,7 @@ Your next move: 审阅计划后启动执行。
 
 ### Wave 3: 订单 & 订阅管理 (第5-6周)
 
-- [ ] 9. 购物车+下单流程（后端）
+- [x] 9. 购物车+下单流程（后端）
   What to do / Must NOT do: 实现购物车API（添加/删除/修改产品数量、配置规格），下单API（POST /api/v1/orders，将购物车转为订单），订单生命周期状态机（pending → approved → provisioning → active → suspended → terminated），订单列表+详情API。支持含产品配置的复杂订单（如物理机+带宽+IP组合下单）。
   Parallelization: Wave 3 | Blocked by: 7, 8 | Blocks: 计费、支付
   References: Drogon ORM事务教程
