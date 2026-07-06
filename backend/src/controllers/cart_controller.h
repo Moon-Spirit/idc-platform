@@ -60,11 +60,6 @@ public:
                            const std::string& id);
 
 private:
-    /// Get the distributor_id for the current request.
-    /// Admin can specify ?distributor_id= to view another's cart.
-    /// Dealer always gets their own distributor_id.
-    static int64_t resolveDistributorId(const drogon::HttpRequestPtr& req);
-
     /// Get the Redis cart key for a distributor.
     static std::string cartKey(int64_t distributorId) {
         return "cart:" + std::to_string(distributorId);

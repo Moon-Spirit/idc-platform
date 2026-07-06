@@ -35,3 +35,15 @@ export async function fetchUser(): Promise<UserInfo> {
 export async function logout(): Promise<void> {
   await request.post('/auth/logout')
 }
+
+export interface RegisterRequest {
+  username: string
+  password: string
+  email: string
+  phone: string
+  company_name: string
+}
+
+export async function register(data: RegisterRequest): Promise<void> {
+  await request.post('/auth/register', data)
+}

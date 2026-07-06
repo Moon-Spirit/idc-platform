@@ -8,7 +8,7 @@
       "plan_name": "idc-platform-v1",
       "status": "active",
       "started_at": "2026-07-06T08:04:44.504Z",
-      "updated_at": "2026-07-06T11:41:58.383Z",
+      "updated_at": "2026-07-06T12:06:20.563Z",
       "session_ids": [
         "opencode:ses_0c9e6d3b5fferywCyyud4EMUPO"
       ],
@@ -172,6 +172,16 @@
           "status": "completed",
           "ended_at": "2026-07-06T11:41:58.382Z",
           "elapsed_ms": 52707
+        },
+        "final-wave:f1": {
+          "task_key": "final-wave:f1",
+          "task_label": "F1",
+          "task_title": "Plan compliance audit",
+          "session_id": "opencode:ses_0c8ae2a20ffeQ2K6Q4IrM6uHZT",
+          "agent": "oracle",
+          "started_at": "2026-07-06T11:47:14.732Z",
+          "status": "running",
+          "updated_at": "2026-07-06T12:06:20.564Z"
         }
       }
     }
@@ -179,7 +189,7 @@
   "active_plan": "/home/sanjiu/IDC/.omo/plans/idc-platform-v1.md",
   "started_at": "2026-07-06T08:04:44.504Z",
   "status": "active",
-  "updated_at": "2026-07-06T11:41:58.383Z",
+  "updated_at": "2026-07-06T12:06:20.563Z",
   "session_ids": [
     "opencode:ses_0c9e6d3b5fferywCyyud4EMUPO"
   ],
@@ -343,6 +353,16 @@
       "status": "completed",
       "ended_at": "2026-07-06T11:41:58.382Z",
       "elapsed_ms": 52707
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "Plan compliance audit",
+      "session_id": "opencode:ses_0c8ae2a20ffeQ2K6Q4IrM6uHZT",
+      "agent": "oracle",
+      "started_at": "2026-07-06T11:47:14.732Z",
+      "status": "running",
+      "updated_at": "2026-07-06T12:06:20.564Z"
     }
   },
   "agent": "atlas"

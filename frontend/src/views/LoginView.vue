@@ -72,6 +72,11 @@ async function handleLogin() {
             {{ loading ? '登录中...' : '登 录' }}
           </el-button>
         </el-form-item>
+        <el-form-item>
+          <span class="register-link">
+            还没有账号？<router-link to="/register">立即注册</router-link>
+          </span>
+        </el-form-item>
       </el-form>
     </div>
   </div>
@@ -103,5 +108,17 @@ async function handleLogin() {
 
 .login-error {
   margin-bottom: 18px;
+}
+
+.register-link {
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: var(--el-text-color-secondary);
+}
+
+.register-link a {
+  color: var(--el-color-primary);
+  text-decoration: none;
 }
 </style>

@@ -6,7 +6,7 @@
 #include "utils/password.h"
 #include "utils/redis_client.h"
 #include "utils/response.h"
-#include "utils/logger.h"
+#include "utils/logger.h">
 
 #include <drogon/drogon.h>
 #include <drogon/utils/Utilities.h>
@@ -61,6 +61,92 @@ static Json::Value getPermissions(int64_t role_id) {
         arr.append(row["code"].as<std::string>());
     }
     return arr;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  POST /api/v1/auth/register — dealer self-registration
+// ═══════════════════════════════════════════════════════════════════════════
+
+void AuthController::registerUser(
+    const drogon::HttpRequestPtr& req,
+    std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
+    auto json = req->getJsonObject();
+    if (!json) {
+        callback(JsonResponse::error(400, "Request body must be valid JSON"));
+        return;
+    }
+
+    // Extract required fields
+    std::string username    = (*json).get("username", "").asString();
+    std::string password    = (*json).get("password", "").asString();
+    std::string email       = (*json).get("email", "").asString();
+    std::string phone       = (*json).get("phone", "").asString();
+    std::string companyName = (*json).get("company_name", "").asString();
+
+    // Validate required fields
+    if (username.empty() || password.empty() || email.empty()
+        || phone.empty() || companyName.empty()) {
+        callback(JsonResponse::error(400,
+            "username, password, email, phone and company_name are required"));
+        return;
+    }
+
+    if (username.length() < 2) {
+        callback(JsonResponse::error(400, "Username must be at least 2 characters"));
+        return;
+    }
+
+    if (password.length() < 6) {
+        callback(JsonResponse::error(400, "Password must be at least 6 characters"));
+        return;
+    }
+
+    auto db = DbClient::getClient();
+
+    try {
+        // Check username uniqueness
+        auto existing = db->execSqlSync(
+            "SELECT id FROM users WHERE username = $1", username);
+        if (!existing.empty()) {
+            callback(JsonResponse::error(409, "Username already exists"));
+            return;
+        }
+
+        // Hash password
+        std::string passwordHash = PasswordUtil::hash(password);
+
+        int64_t distributorId = 0;
+
+        // Create distributor and user inside a transaction
+        DbClient::transaction([&](drogon::orm::Transaction& trans) {
+            // Create distributor record
+            auto distResult = trans.execSqlSync(
+                "INSERT INTO distributors (name, status) "
+                "VALUES ($1, 1) RETURNING id",
+                companyName);
+            if (distResult.empty()) {
+                throw std::runtime_error("Failed to create distributor");
+            }
+            distributorId = distResult[0][0].as<int64_t>();
+
+            // Create user with role='dealer' (role_id=2) and status=2 (pending)
+            trans.execSqlSync(
+                "INSERT INTO users (username, password_hash, email, phone, "
+                "real_name, status, role_id, distributor_id) "
+                "VALUES ($1, $2, $3, $4, $5, 2, 2, $6)",
+                username, passwordHash, email, phone,
+                companyName, distributorId);
+        });
+
+        LOG_INFO << "[Auth] Registration success: username=" << username
+                 << " distributor_id=" << distributorId;
+
+        callback(JsonResponse::ok(
+            std::string("Registration submitted, pending admin approval")));
+    } catch (const std::exception& e) {
+        LOG_ERROR << "[Auth] Registration error: " << e.what();
+        callback(JsonResponse::serverError("Internal server error"));
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -126,6 +212,10 @@ void AuthController::login(
 
         // Check status
         int16_t status = row["status"].as<int16_t>();
+        if (status == 2) {
+            callback(JsonResponse::forbidden("Account is pending admin approval"));
+            return;
+        }
         if (status == 0) {
             callback(JsonResponse::forbidden("Account is disabled"));
             return;

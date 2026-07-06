@@ -1,4 +1,5 @@
 {
+    "_note": "DB password and JWT secret can be overridden via IDC_DB_PASSWORD and IDC_JWT_SECRET env vars respectively",
     "app": {
         "number_of_threads": 4,
         "log": {

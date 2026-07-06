@@ -1,5 +1,6 @@
 #include "subscription_controller.h"
 #include "services/subscription_service.h"
+#include "utils/access_helpers.h"
 #include "utils/response.h"
 #include "utils/logger.h"
 
@@ -28,30 +29,6 @@ namespace {
         return req->getAttributes()->get<std::string>("username");
     }
 
-    /// Get the distributor_id for the current user.
-    /// Admin can pass ?distributor_id= to filter by another.
-    int64_t resolveDistributorId(const drogon::HttpRequestPtr& req) {
-        auto attrs = req->getAttributes();
-        int64_t roleId = attrs->get<int64_t>("role_id");
-        int64_t userId = attrs->get<int64_t>("user_id");
-
-        // Admin can pass distributor_id query param
-        if (roleId == 1) {
-            auto distId = req->getOptionalParameter<int64_t>("distributor_id");
-            if (distId.has_value()) {
-                return distId.value();
-            }
-        }
-
-        // Get distributor_id from user record
-        auto db = drogon::app().getDbClient("idc_db");
-        auto result = db->execSqlSync(
-            "SELECT distributor_id FROM users WHERE id = $1", userId);
-        if (result.empty() || result[0]["distributor_id"].isNull()) {
-            return 0;
-        }
-        return result[0]["distributor_id"].as<int64_t>();
-    }
 } // anonymous namespace
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -1,6 +1,7 @@
 #include "cart_controller.h"
 #include "services/product_service.h"
 #include "services/pricing_service.h"
+#include "utils/access_helpers.h"
 #include "utils/response.h"
 #include "utils/redis_client.h"
 #include "utils/logger.h"
@@ -14,34 +15,6 @@
 #include <string>
 
 namespace idc {
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  Helper: resolve distributor ID from request
-// ═══════════════════════════════════════════════════════════════════════════
-
-int64_t CartController::resolveDistributorId(
-    const drogon::HttpRequestPtr& req) {
-    auto attrs = req->getAttributes();
-    int64_t roleId = attrs->get<int64_t>("role_id");
-    int64_t userId = attrs->get<int64_t>("user_id");
-
-    // Admin can pass ?distributor_id= to manage another's cart
-    if (roleId == 1) {
-        auto distId = req->getOptionalParameter<int64_t>("distributor_id");
-        if (distId.has_value()) {
-            return distId.value();
-        }
-    }
-
-    // Get distributor_id from user record
-    auto db = drogon::app().getDbClient("idc_db");
-    auto result = db->execSqlSync(
-        "SELECT distributor_id FROM users WHERE id = $1", userId);
-    if (result.empty() || result[0]["distributor_id"].isNull()) {
-        return 0;
-    }
-    return result[0]["distributor_id"].as<int64_t>();
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  POST /api/v1/cart/items
@@ -85,7 +58,7 @@ void CartController::addItem(
         }
 
         // Resolve distributor
-        int64_t distributorId = resolveDistributorId(req);
+        int64_t distributorId = idc::resolveDistributorId(req);
         if (distributorId <= 0) {
             callback(JsonResponse::error(400, "User has no distributor assigned"));
             return;
@@ -155,7 +128,7 @@ void CartController::listCart(
     const drogon::HttpRequestPtr& req,
     std::function<void(const drogon::HttpResponsePtr&)>&& callback) {
     try {
-        int64_t distributorId = resolveDistributorId(req);
+        int64_t distributorId = idc::resolveDistributorId(req);
         if (distributorId <= 0) {
             callback(JsonResponse::error(400, "User has no distributor assigned"));
             return;
@@ -255,7 +228,7 @@ void CartController::updateItem(
             return;
         }
 
-        int64_t distributorId = resolveDistributorId(req);
+        int64_t distributorId = idc::resolveDistributorId(req);
         if (distributorId <= 0) {
             callback(JsonResponse::error(400, "User has no distributor assigned"));
             return;
@@ -345,7 +318,7 @@ void CartController::removeItem(
     std::function<void(const drogon::HttpResponsePtr&)>&& callback,
     const std::string& id) {
     try {
-        int64_t distributorId = resolveDistributorId(req);
+        int64_t distributorId = idc::resolveDistributorId(req);
         if (distributorId <= 0) {
             callback(JsonResponse::error(400, "User has no distributor assigned"));
             return;

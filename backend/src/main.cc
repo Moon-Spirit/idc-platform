@@ -19,11 +19,36 @@
 #include "services/zjmf_adapter.h"
 #include "services/zjmf_provisioning_service.h"
 
+#include <fstream>
 #include <iostream>
+#include <json/json.h>
 
 int main() {
-    // ── Load configuration ───────────────────────────────────────────────────
-    drogon::app().loadConfigFile("config.json");
+    // ── Load configuration with env var overrides ──────────────────────────
+    // Read config.json, apply environment variable overrides, then pass the
+    // modified JSON to Drogon's loadConfigJson.
+    {
+        std::ifstream ifs("config.json");
+        Json::Value configJson;
+        Json::CharReaderBuilder reader;
+        std::string errs;
+        if (Json::parseFromStream(reader, ifs, &configJson, &errs)) {
+            // Override DB password from IDC_DB_PASSWORD env var
+            const char* dbPassword = std::getenv("IDC_DB_PASSWORD");
+            if (dbPassword && dbPassword[0] != '\0') {
+                if (configJson.isMember("db_clients")
+                    && configJson["db_clients"].isArray()
+                    && configJson["db_clients"].size() > 0) {
+                    configJson["db_clients"][0u]["password"] = dbPassword;
+                    LOG_INFO << "[Config] DB password overridden via IDC_DB_PASSWORD env var";
+                }
+            }
+            drogon::app().loadConfigJson(configJson);
+        } else {
+            LOG_ERROR << "[Config] Failed to parse config.json: " << errs;
+            drogon::app().loadConfigFile("config.json");
+        }
+    }
 
     // ── Load JWT config from custom section ─────────────────────────────────
     idc::Config::init();

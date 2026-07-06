@@ -307,9 +307,9 @@ Json::Value OrderService::createOrder(int64_t userId, int64_t roleId,
 // ═══════════════════════════════════════════════════════════════════════════
 
 Json::Value OrderService::listOrders(int64_t userId, int64_t roleId,
-                                      const std::string& status,
-                                      int64_t distributorId,
-                                      int page, int perPage) {
+                                       const std::string& status,
+                                       int64_t distributorId,
+                                       int page, int perPage) {
     auto db = DbClient::getClient();
 
     // Permission filter: dealers only see their own orders
@@ -319,46 +319,92 @@ Json::Value OrderService::listOrders(int64_t userId, int64_t roleId,
         distributorId = getUserDistributorId(userId);
     }
 
-    // Build SQL with individual parameters — Drogon ORM does not support
-    // vector<Json::Value> as a single parameter.
+    // Determine which filters are active
+    bool hasDistributorFilter = (distributorId > 0);
+    bool hasStatusFilter = (!status.empty() && OrderStates::isValid(status));
+
+    // Build parameterized SQL with positional placeholders ($1, $2, ...)
     std::string whereClause;
-    std::string countSql = "SELECT COUNT(*) FROM orders o";
+    std::vector<std::string> whereParts;
+    int paramIdx = 0;
+
+    if (hasDistributorFilter) {
+        whereParts.push_back("o.distributor_id = $" + std::to_string(++paramIdx));
+    }
+    if (hasStatusFilter) {
+        whereParts.push_back("o.status = $" + std::to_string(++paramIdx));
+    }
+
+    if (!whereParts.empty()) {
+        whereClause = " WHERE ";
+        for (size_t i = 0; i < whereParts.size(); ++i) {
+            if (i > 0) whereClause += " AND ";
+            whereClause += whereParts[i];
+        }
+    }
+
+    // Sort / pagination placeholders
+    std::string limitPlaceholder = "$" + std::to_string(++paramIdx);
+    std::string offsetPlaceholder = "$" + std::to_string(++paramIdx);
+
+    std::string countSql = "SELECT COUNT(*) FROM orders o" + whereClause;
     std::string querySql =
         "SELECT o.id, o.order_no, o.distributor_id, d.name AS distributor_name, "
         "o.status, o.total_amount, o.final_amount, o.billing_cycle, "
         "(SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count, "
         "o.created_at "
         "FROM orders o "
-        "LEFT JOIN distributors d ON d.id = o.distributor_id";
+        "LEFT JOIN distributors d ON d.id = o.distributor_id" +
+        whereClause +
+        " ORDER BY o.created_at DESC "
+        "LIMIT " + limitPlaceholder + " OFFSET " + offsetPlaceholder;
 
-    // Build WHERE conditions as string (safe since values are validated)
-    std::vector<std::string> conditions;
-    if (distributorId > 0) {
-        conditions.push_back("o.distributor_id = " + std::to_string(distributorId));
-    }
-    if (!status.empty() && OrderStates::isValid(status)) {
-        conditions.push_back("o.status = '" + status + "'");
-    }
+    int offset = (page - 1) * perPage;
 
-    if (!conditions.empty()) {
-        whereClause = " WHERE ";
-        for (size_t i = 0; i < conditions.size(); ++i) {
-            if (i > 0) whereClause += " AND ";
-            whereClause += conditions[i];
+    // Dispatch to parameterized query based on active filters
+    // Drogon's execSqlSync uses variadic templates, so we branch on filter
+    // combinations to pass the correct parameters.
+    auto execWithParams = [&](const std::string& sql) -> drogon::orm::Result {
+        if (hasDistributorFilter && hasStatusFilter) {
+            return db->execSqlSync(sql, distributorId, status, perPage, offset);
+        } else if (hasDistributorFilter) {
+            return db->execSqlSync(sql, distributorId, perPage, offset);
+        } else if (hasStatusFilter) {
+            return db->execSqlSync(sql, status, perPage, offset);
+        } else {
+            return db->execSqlSync(sql, perPage, offset);
         }
-    }
+    };
 
     // Count total
-    auto countResult = db->execSqlSync(countSql + whereClause);
+    auto countSqlNoPage = [&]() -> std::string {
+        if (hasDistributorFilter && hasStatusFilter) {
+            return "SELECT COUNT(*) FROM orders o WHERE o.distributor_id = $1 AND o.status = $2";
+        } else if (hasDistributorFilter) {
+            return "SELECT COUNT(*) FROM orders o WHERE o.distributor_id = $1";
+        } else if (hasStatusFilter) {
+            return "SELECT COUNT(*) FROM orders o WHERE o.status = $1";
+        } else {
+            return "SELECT COUNT(*) FROM orders o";
+        }
+    };
+
+    auto countResult = [&]() -> drogon::orm::Result {
+        if (hasDistributorFilter && hasStatusFilter) {
+            return db->execSqlSync(countSqlNoPage(), distributorId, status);
+        } else if (hasDistributorFilter) {
+            return db->execSqlSync(countSqlNoPage(), distributorId);
+        } else if (hasStatusFilter) {
+            return db->execSqlSync(countSqlNoPage(), status);
+        } else {
+            return db->execSqlSync(countSqlNoPage());
+        }
+    }();
+
     int64_t total = countResult.empty() ? 0 : countResult[0][0].as<int64_t>();
 
     // Fetch page
-    int offset = (page - 1) * perPage;
-    querySql += whereClause +
-        " ORDER BY o.created_at DESC "
-        "LIMIT " + std::to_string(perPage) + " OFFSET " + std::to_string(offset);
-
-    auto rows = db->execSqlSync(querySql);
+    auto rows = execWithParams(querySql);
 
     Json::Value items(Json::arrayValue);
     for (const auto& row : rows) {

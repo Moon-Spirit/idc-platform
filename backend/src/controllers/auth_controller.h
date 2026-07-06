@@ -7,14 +7,17 @@ namespace idc {
 /// Authentication & session controller.
 ///
 /// Endpoints:
-///   POST /api/v1/auth/login    — authenticate, return JWT
-///   POST /api/v1/auth/logout   — revoke current token
-///   GET  /api/v1/auth/me       — current user profile
-///   POST /api/v1/auth/refresh  — rotate token
+///   POST /api/v1/auth/register  — dealer self-registration (pending approval)
+///   POST /api/v1/auth/login     — authenticate, return JWT
+///   POST /api/v1/auth/logout    — revoke current token
+///   GET  /api/v1/auth/me        — current user profile
+///   POST /api/v1/auth/refresh   — rotate token
 class AuthController
     : public drogon::HttpController<AuthController> {
 public:
     METHOD_LIST_BEGIN
+    ADD_METHOD_TO(AuthController::registerUser,
+                  "/api/v1/auth/register", drogon::Post);
     ADD_METHOD_TO(AuthController::login,  "/api/v1/auth/login",  drogon::Post);
     ADD_METHOD_TO(AuthController::logout, "/api/v1/auth/logout", drogon::Post,
                   "JWTFilter");
@@ -25,6 +28,11 @@ public:
     METHOD_LIST_END
 
     // -- Handlers ----------------------------------------------------------
+
+    /// POST /api/v1/auth/register
+    static void registerUser(
+        const drogon::HttpRequestPtr& req,
+        std::function<void(const drogon::HttpResponsePtr&)>&& callback);
 
     /// POST /api/v1/auth/login
     static void login(const drogon::HttpRequestPtr& req,
