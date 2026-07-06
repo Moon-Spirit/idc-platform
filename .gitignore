@@ -36,4 +36,5 @@ backend/orm/
 # OMO system artifacts
 .omo/run-continuation/
 
-.omo
+.omo/
+.codegraph

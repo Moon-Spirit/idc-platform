@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -397,9 +397,13 @@ onMounted(async () => {
 
   // Generate a default JWT secret
   generateJwtSecret()
+})
 
-  // Auto-run environment check on first load
-  await checkEnvironment()
+// Watch for step 4 transition to auto-start installation
+watch(activeStep, (newVal) => {
+  if (newVal === 4) {
+    executeInstall()
+  }
 })
 </script>
 
