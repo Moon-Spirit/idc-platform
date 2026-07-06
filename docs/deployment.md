@@ -1,42 +1,42 @@
-# IDC Platform — Production Deployment Guide
+# IDC 平台 — 生产环境部署指南
 
-> **Target:** Ubuntu 22.04 LTS  
-> **Stack:** Drogon C++17 (backend) + Vue 3 (frontend) + PostgreSQL 16 + Redis 7  
-> **Version:** 1.0.0
-
----
-
-## Table of Contents
-
-1. [Environment Requirements](#1-environment-requirements)
-2. [Configuration Reference](#2-configuration-reference)
-3. [Step-by-Step Deployment](#3-step-by-step-deployment)
-   - [3.1 System Preparation](#31-system-preparation)
-   - [3.2 Database Setup](#32-database-setup)
-   - [3.3 Backend Build & Install](#33-backend-build--install)
-   - [3.4 Frontend Build](#34-frontend-build)
-   - [3.5 Database Migration](#35-database-migration)
-   - [3.6 Nginx Configuration](#36-nginx-configuration)
-   - [3.7 systemd Service](#37-systemd-service)
-   - [3.8 Health Check](#38-health-check)
-4. [Log Management](#4-log-management)
-5. [Backup Strategy](#5-backup-strategy)
-6. [Monitoring Recommendations](#6-monitoring-recommendations)
+> **目标系统：** Ubuntu 22.04 LTS  
+> **技术栈：** Drogon C++17（后端）+ Vue 3（前端）+ PostgreSQL 16 + Redis 7  
+> **版本：** 1.0.0
 
 ---
 
-## 1. Environment Requirements
+## 目录
 
-### Hardware Minimums
+1. [环境要求](#1-environment-requirements)
+2. [配置参考](#2-configuration-reference)
+3. [分步部署指南](#3-step-by-step-deployment)
+   - [3.1 系统准备](#31-system-preparation)
+   - [3.2 数据库设置](#32-database-setup)
+   - [3.3 后端构建与安装](#33-backend-build--install)
+   - [3.4 前端构建](#34-frontend-build)
+   - [3.5 数据库迁移](#35-database-migration)
+   - [3.6 Nginx 配置](#36-nginx-configuration)
+   - [3.7 systemd 服务](#37-systemd-service)
+   - [3.8 健康检查](#38-health-check)
+4. [日志管理](#4-log-management)
+5. [备份策略](#5-backup-strategy)
+6. [监控建议](#6-monitoring-recommendations)
 
-| Component | Minimum | Recommended |
+---
+
+## 1. 环境要求
+
+### 硬件最低配置
+
+| 组件 | 最低配置 | 推荐配置 |
 |-----------|---------|-------------|
-| CPU | 2 cores | 4+ cores |
-| RAM | 4 GB | 8+ GB |
-| Disk | 40 GB SSD | 100 GB+ SSD |
-| Network | 100 Mbps | 1 Gbps |
+| CPU | 2 核 | 4+ 核 |
+| 内存 | 4 GB | 8+ GB |
+| 磁盘 | 40 GB SSD | 100 GB+ SSD |
+| 网络 | 100 Mbps | 1 Gbps |
 
-### Software Dependencies
+### 软件依赖
 
 ```bash
 # Ubuntu 22.04 LTS
@@ -55,7 +55,7 @@ Node.js 22.x (for frontend build only)
 Nginx 1.24+
 ```
 
-### Required System Packages
+### 必需的系统软件包
 
 ```bash
 # Core dependencies
@@ -83,11 +83,11 @@ sudo apt install -y nodejs
 
 ---
 
-## 2. Configuration Reference
+## 2. 配置参考
 
-### 2.1 Backend: `config.json`
+### 2.1 后端配置：`config.json`
 
-Located at `/opt/idc-platform/config.json`. Full reference:
+配置文件位于 `/opt/idc-platform/config.json`。完整参考如下：
 
 ```json
 {
@@ -146,41 +146,41 @@ Located at `/opt/idc-platform/config.json`. Full reference:
 }
 ```
 
-> ⚠️ Always replace `${DB_PASSWORD}`, `${JWT_SECRET}`, and `${REDIS_PASSWORD}` with real secrets in production. Use `openssl rand -base64 32` to generate secrets.
+> ⚠️ 生产环境中务必用真实密钥替换 `${DB_PASSWORD}`、`${JWT_SECRET}` 和 `${REDIS_PASSWORD}`。使用 `openssl rand -base64 32` 生成密钥。
 
-### 2.2 Environment Variables
+### 2.2 环境变量
 
-| Variable | Description | Default |
+| 变量 | 描述 | 默认值 |
 |----------|-------------|---------|
-| `DB_PASSWORD` | PostgreSQL password | _(required)_ |
-| `JWT_SECRET` | JWT signing secret | _(required)_ |
-| `REDIS_PASSWORD` | Redis password | _(required)_ |
-| `APP_THREADS` | Number of worker threads | `4` |
-| `LOG_LEVEL` | Log level (trace/debug/info/warn/error) | `info` |
-| `ZJMF_MOCK` | Enable ZJMF mock mode for testing | `false` |
+| `DB_PASSWORD` | PostgreSQL 密码 | _(必填)_ |
+| `JWT_SECRET` | JWT 签名密钥 | _(必填)_ |
+| `REDIS_PASSWORD` | Redis 密码 | _(必填)_ |
+| `APP_THREADS` | 工作线程数 | `4` |
+| `LOG_LEVEL` | 日志级别 (trace/debug/info/warn/error) | `info` |
+| `ZJMF_MOCK` | 启用 ZJMF 模拟模式用于测试 | `false` |
 
-### 2.3 Frontend: `frontend/.env.production`
+### 2.3 前端配置：`frontend/.env.production`
 
 ```env
 VITE_API_BASE_URL=/api/v1
 VITE_APP_TITLE=IDC 分销平台
 ```
 
-### 2.4 Ports
+### 2.4 端口
 
-| Service | Port | Protocol |
+| 服务 | 端口 | 协议 |
 |---------|------|----------|
-| Backend API | 8080 | TCP (internal) |
-| PostgreSQL | 5432 | TCP (internal) |
-| Redis | 6379 | TCP (internal) |
-| Nginx HTTP | 80 | TCP (public) |
-| Nginx HTTPS | 443 | TCP (public) |
+| 后端 API | 8080 | TCP（内网） |
+| PostgreSQL | 5432 | TCP（内网） |
+| Redis | 6379 | TCP（内网） |
+| Nginx HTTP | 80 | TCP（公网） |
+| Nginx HTTPS | 443 | TCP（公网） |
 
 ---
 
-## 3. Step-by-Step Deployment
+## 3. 分步部署指南
 
-### 3.1 System Preparation
+### 3.1 系统准备
 
 ```bash
 # Create application user
@@ -208,7 +208,7 @@ sudo sed -i 's/# requirepass foobared/requirepass '"$(openssl rand -base64 32)"'
 sudo systemctl restart redis-server
 ```
 
-### 3.2 Database Setup
+### 3.2 数据库设置
 
 ```bash
 # Connect as postgres superuser
@@ -234,7 +234,7 @@ CREATE EXTENSION IF NOT EXISTS timescaledb;
 \q
 ```
 
-### 3.3 Backend Build & Install
+### 3.3 后端构建与安装
 
 ```bash
 # Clone or copy source
@@ -259,7 +259,7 @@ cp /opt/idc-platform/backend/config.json /opt/idc-platform/config/
 exit
 ```
 
-### 3.4 Frontend Build
+### 3.4 前端构建
 
 ```bash
 # Build frontend (can be done on CI or deploy machine)
@@ -274,7 +274,7 @@ ls frontend/dist/  # Should contain index.html, assets/, etc.
 sudo cp -r frontend/dist/* /opt/idc-platform/frontend/
 ```
 
-### 3.5 Database Migration
+### 3.5 数据库迁移
 
 ```bash
 # Apply migrations in order
@@ -290,9 +290,9 @@ for f in *.sql; do
 done
 ```
 
-### 3.6 Nginx Configuration
+### 3.6 Nginx 配置
 
-Create `/etc/nginx/sites-available/idc-platform`:
+创建 `/etc/nginx/sites-available/idc-platform`：
 
 ```nginx
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -399,7 +399,7 @@ server {
 }
 ```
 
-#### 3.6.1 SSL with Let's Encrypt
+#### 3.6.1 使用 Let's Encrypt 配置 SSL
 
 ```bash
 # Obtain certificate
@@ -412,7 +412,7 @@ sudo certbot renew --dry-run
 sudo systemctl status certbot.timer
 ```
 
-#### 3.6.2 Enable the site
+#### 3.6.2 启用站点
 
 ```bash
 sudo ln -sf /etc/nginx/sites-available/idc-platform /etc/nginx/sites-enabled/
@@ -421,9 +421,9 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 3.7 systemd Service
+### 3.7 systemd 服务
 
-Create `/etc/systemd/system/idc-platform.service`:
+创建 `/etc/systemd/system/idc-platform.service`：
 
 ```ini
 [Unit]
@@ -470,16 +470,16 @@ Environment=REDIS_PASSWORD=your_redis_password
 WantedBy=multi-user.target
 ```
 
-> ⚠️ Never hardcode secrets in the service file in production. Use a systemd EnvironmentFile or a secrets manager instead.
+> ⚠️ 生产环境中切勿在服务文件中硬编码密钥。建议使用 systemd EnvironmentFile 或密钥管理器。
 
-**Alternative: Use EnvironmentFile** (recommended):
+**替代方案：使用 EnvironmentFile**（推荐）：
 
 ```ini
 [Service]
 EnvironmentFile=/opt/idc-platform/.env.production
 ```
 
-Then populate `/opt/idc-platform/.env.production`:
+然后填写 `/opt/idc-platform/.env.production`：
 
 ```env
 DB_PASSWORD=your_actual_db_password
@@ -489,7 +489,7 @@ LOG_LEVEL=info
 APP_THREADS=4
 ```
 
-**Enable and start:**
+**启用并启动：**
 
 ```bash
 sudo systemctl daemon-reload
@@ -500,15 +500,15 @@ sudo systemctl status idc-platform
 
 ---
 
-### 3.8 Health Check Endpoints
+### 3.8 健康检查端点
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 描述 |
 |----------|--------|-------------|
-| `/health` | GET | Nginx-level health (proxies to backend auth) |
-| `/api/v1/auth/me` | GET | Backend live check (requires valid JWT) |
-| `GET /api/v1/billing/status` | GET | Checks DB connectivity |
+| `/health` | GET | Nginx 级别健康检查（代理到后端认证） |
+| `/api/v1/auth/me` | GET | 后端存活检查（需要有效 JWT） |
+| `GET /api/v1/billing/status` | GET | 检查数据库连接 |
 
-**Health check command:**
+**健康检查命令：**
 
 ```bash
 # Basic health (HTTP 200 = alive)
@@ -518,7 +518,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/auth/me \
     -d '{"username":"admin","password":"admin123"}' | jq -r '.data.token')"
 ```
 
-**Load balancer health check configuration:**
+**负载均衡器健康检查配置：**
 
 ```nginx
 # In your load balancer (HAProxy / AWS ALB / Nginx Plus)
@@ -530,23 +530,23 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/auth/me \
 
 ---
 
-## 4. Log Management
+## 4. 日志管理
 
-### Log Locations
+### 日志位置
 
-| Component | Path | Format |
+| 组件 | 路径 | 格式 |
 |-----------|------|--------|
-| Backend API | `/var/log/idc-platform/idc*.log` | Text (Drogon) |
-| Nginx access | `/var/log/nginx/access.log` | Combined |
-| Nginx error | `/var/log/nginx/error.log` | Error |
+| 后端 API | `/var/log/idc-platform/idc*.log` | 文本（Drogon） |
+| Nginx 访问日志 | `/var/log/nginx/access.log` | Combined |
+| Nginx 错误日志 | `/var/log/nginx/error.log` | Error |
 | PostgreSQL | `/var/log/postgresql/postgresql-16-main.log` | CSVLOG |
-| Redis | `/var/log/redis/redis-server.log` | Text |
-| systemd (backend) | `journalctl -u idc-platform` | Journal |
+| Redis | `/var/log/redis/redis-server.log` | 文本 |
+| systemd（后端） | `journalctl -u idc-platform` | Journal |
 
-### Log Rotation
+### 日志轮转
 
-Backend logs are managed by Drogon's built-in rotation (see config.json).  
-System logs use `logrotate`. Create `/etc/logrotate.d/idc-platform`:
+后端日志由 Drogon 内置轮转机制管理（参见 config.json）。  
+系统日志使用 `logrotate`。创建 `/etc/logrotate.d/idc-platform`：
 
 ```
 /var/log/idc-platform/*.log {
@@ -577,22 +577,22 @@ System logs use `logrotate`. Create `/etc/logrotate.d/idc-platform`:
 
 ---
 
-## 5. Backup Strategy
+## 5. 备份策略
 
-### 5.1 Daily pg_dump
+### 5.1 每日 pg_dump 备份
 
-See [scripts/backup.sh](../scripts/backup.sh) for automated backup script.
+自动化备份脚本请参见 [scripts/backup.sh](../scripts/backup.sh)。
 
-Backup schedule via cron:
+通过 cron 设置备份计划：
 
 ```bash
 # Daily at 3:00 AM
 0 3 * * * /opt/idc-platform/scripts/backup.sh
 ```
 
-### 5.2 WAL Archiving (Point-in-Time Recovery)
+### 5.2 WAL 归档（时间点恢复）
 
-Configure PostgreSQL WAL archiving in `/etc/postgresql/16/main/postgresql.conf`:
+在 `/etc/postgresql/16/main/postgresql.conf` 中配置 PostgreSQL WAL 归档：
 
 ```ini
 wal_level = replica
@@ -601,7 +601,7 @@ archive_command = 'cp %p /var/lib/postgresql/16/wal_archive/%f && gzip -f /var/l
 archive_timeout = 60
 ```
 
-Create the archive directory:
+创建归档目录：
 
 ```bash
 sudo mkdir -p /var/lib/postgresql/16/wal_archive
@@ -609,15 +609,15 @@ sudo chown -R postgres:postgres /var/lib/postgresql/16/wal_archive
 sudo systemctl restart postgresql
 ```
 
-### 5.3 Retention Policy
+### 5.3 保留策略
 
-| Backup Type | Retention | Storage |
+| 备份类型 | 保留期限 | 存储位置 |
 |-------------|-----------|---------|
-| Daily full dump | 30 days | Local + S3 |
-| WAL archives | 7 days | Local only |
-| Monthly snapshot | 12 months | S3/remote |
+| 每日完整转储 | 30 天 | 本地 + S3 |
+| WAL 归档 | 7 天 | 仅本地 |
+| 每月快照 | 12 个月 | S3/远程 |
 
-### 5.4 Restoration Test
+### 5.4 恢复测试
 
 ```bash
 # Restore a backup to verify integrity
@@ -628,20 +628,20 @@ psql -d idc_platform_test -c "SELECT count(*) FROM users;"
 
 ---
 
-## 6. Monitoring Recommendations
+## 6. 监控建议
 
-### 6.1 Essential Metrics
+### 6.1 关键指标
 
-| Category | Metrics | Tool |
+| 类别 | 指标 | 工具 |
 |----------|---------|------|
-| System | CPU, RAM, disk, network | Prometheus Node Exporter |
-| Backend | Request rate, latency (p50/p95/p99), error rate | Prometheus + Grafana |
-| Database | Connections, query time, cache hit ratio | pg_stat_statements |
-| Redis | Memory, hit rate, connected clients | Redis INFO |
-| Nginx | Requests/sec, 4xx/5xx rates | Nginx stub_status |
-| SSL | Certificate expiry | certbot renew --dry-run |
+| 系统 | CPU、内存、磁盘、网络 | Prometheus Node Exporter |
+| 后端 | 请求率、延迟 (p50/p95/p99)、错误率 | Prometheus + Grafana |
+| 数据库 | 连接数、查询时间、缓存命中率 | pg_stat_statements |
+| Redis | 内存、命中率、已连接客户端 | Redis INFO |
+| Nginx | 每秒请求数、4xx/5xx 比率 | Nginx stub_status |
+| SSL | 证书到期时间 | certbot renew --dry-run |
 
-### 6.2 Prometheus + Grafana (Quick Setup)
+### 6.2 Prometheus + Grafana（快速搭建）
 
 ```bash
 # Install Prometheus Node Exporter
@@ -659,7 +659,7 @@ sudo systemctl enable grafana-server
 sudo systemctl start grafana-server
 ```
 
-### 6.3 Alerting Rules (Prometheus)
+### 6.3 告警规则（Prometheus）
 
 ```yaml
 groups:
@@ -690,14 +690,14 @@ groups:
           summary: "SSL certificate expires in {{ $value }} days"
 ```
 
-### 6.4 Uptime Monitoring
+### 6.4 运行状态监控
 
-- [UptimeRobot](https://uptimerobot.com) — Free tier monitors `/health` every 5 minutes
-- [Checkly](https://checklyhq.com) — Advanced browser + API check monitoring
+- [UptimeRobot](https://uptimerobot.com) — 免费版每 5 分钟监控 `/health` 端点
+- [Checkly](https://checklyhq.com) — 高级浏览器 + API 检查监控
 
 ---
 
-## Appendix A: Quick Reference Commands
+## 附录 A：快速参考命令
 
 ```bash
 # Service management
@@ -724,17 +724,17 @@ tail -f /var/log/idc-platform/idc*.log
 tail -f /var/log/nginx/access.log
 ```
 
-## Appendix B: Configuration Checklist
+## 附录 B：配置检查清单
 
-- [ ] PostgreSQL password changed from default
-- [ ] Redis password set
-- [ ] JWT secret generated (`openssl rand -base64 32`)
-- [ ] config.json host changed from `postgres` → `localhost` and `redis` → `localhost`
-- [ ] config.json `mock` set to `false` (unless testing)
-- [ ] Nginx SSL certificate obtained and configured
-- [ ] systemd service file installed and enabled
-- [ ] Log rotation configured
-- [ ] Backup script installed and cron job added
-- [ ] Firewall ports restricted (only 80/443 public)
-- [ ] Fail2ban installed for SSH protection
-- [ ] Automatic security updates enabled
+- [ ] 已修改 PostgreSQL 默认密码
+- [ ] 已设置 Redis 密码
+- [ ] 已生成 JWT 密钥（`openssl rand -base64 32`）
+- [ ] 已将 config.json 中的 host 从 `postgres` 改为 `localhost`，`redis` 改为 `localhost`
+- [ ] 已将 config.json 中的 `mock` 设为 `false`（测试环境除外）
+- [ ] 已获取并配置 Nginx SSL 证书
+- [ ] 已安装并启用 systemd 服务文件
+- [ ] 已配置日志轮转
+- [ ] 已安装备份脚本并添加 cron 任务
+- [ ] 已限制防火墙端口（仅开放 80/443 公网端口）
+- [ ] 已安装 Fail2ban 用于 SSH 保护
+- [ ] 已启用自动安全更新

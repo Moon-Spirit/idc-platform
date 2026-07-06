@@ -107,3 +107,8 @@ export async function getSetupStatus(): Promise<SetupStatus> {
   const res = await request.get<SetupStatus>('/setup/status')
   return res.data
 }
+
+/** GET /api/v1/setup/status — 检查安装状态（别名，语义更明确） */
+export async function checkSetupStatus(): Promise<SetupStatus> {
+  return getSetupStatus()
+}

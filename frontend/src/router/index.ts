@@ -24,7 +24,7 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     name: 'Layout',
     component: Layout,
-    redirect: '/dashboard',
+    redirect: '/setup',
     children: [
       {
         path: 'dashboard',
@@ -179,7 +179,33 @@ const router = createRouter({
   routes,
 })
 
+// ── Setup status cache ────────────────────────────────────────────────────
+let _setupChecked = false
+let _setupInstalled = false
+
 router.beforeEach(async (to, _from) => {
+  // ── Setup status guard ──────────────────────────────────────────────
+  // Always check if user hits a protected route (not /setup, not /login)
+  if (!to.meta.noAuth) {
+    // Re-check if coming from /setup (setup may have just completed)
+    if (_from.name === 'Setup') {
+      _setupChecked = false
+    }
+    if (!_setupChecked) {
+      try {
+        const { getSetupStatus } = await import('@/api/setup')
+        const status = await getSetupStatus()
+        _setupInstalled = status.installed
+      } catch {
+        _setupInstalled = false
+      }
+      _setupChecked = true
+    }
+    if (!_setupInstalled) {
+      return { name: 'Setup' }
+    }
+  }
+
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
 
