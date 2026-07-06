@@ -376,7 +376,7 @@ function prevStep(): void {
 }
 
 function goToLogin(): void {
-  router.push('/login')
+  router.push('/login?redirect=%2Fadmin%2Fdashboard')
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
