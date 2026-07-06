@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import AdminDashboard from './admin/AdminDashboard.vue'
 import DealerDashboard from './dealer/DashboardView.vue'
 
 const authStore = useAuthStore()
@@ -10,15 +11,8 @@ const isDealer = computed(() => authStore.user?.role === 'dealer')
 </script>
 
 <template>
-  <!-- Admin dashboard placeholder (not in scope — see T22) -->
-  <div v-if="isAdmin" class="dashboard">
-    <el-card>
-      <template #header>
-        <span>仪表盘</span>
-      </template>
-      <p>欢迎回来，{{ authStore.user?.username ?? '用户' }}</p>
-    </el-card>
-  </div>
+  <!-- Admin dashboard -->
+  <AdminDashboard v-if="isAdmin" />
 
   <!-- Dealer dashboard -->
   <DealerDashboard v-else-if="isDealer" />

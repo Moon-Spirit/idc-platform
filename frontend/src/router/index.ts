@@ -118,6 +118,39 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/dealer/invoice/InvoiceDetail.vue'),
         meta: { title: '账单详情', hidden: true, role: 'dealer' },
       },
+      // ── Admin: Dashboard ────────────────────────────────────────────────
+      {
+        path: 'admin/dashboard',
+        name: 'AdminDashboard',
+        component: () => import('@/views/admin/AdminDashboard.vue'),
+        meta: { title: '管理后台', icon: 'Odometer', role: 'admin' },
+      },
+      // ── Admin: Reports ──────────────────────────────────────────────────
+      {
+        path: 'admin/reports/revenue',
+        name: 'ReportRevenue',
+        component: () => import('@/views/admin/report/ReportRevenue.vue'),
+        meta: { title: '营收报表', icon: 'TrendCharts', role: 'admin' },
+      },
+      {
+        path: 'admin/reports/distributors',
+        name: 'ReportDistributor',
+        component: () => import('@/views/admin/report/ReportDistributor.vue'),
+        meta: { title: '经销商销售报表', icon: 'DataAnalysis', role: 'admin' },
+      },
+      // ── Admin: Sync ──────────────────────────────────────────────────────
+      {
+        path: 'admin/sync',
+        name: 'SyncDashboard',
+        component: () => import('@/views/admin/sync/SyncDashboard.vue'),
+        meta: { title: 'ZJMF 同步管理', icon: 'Connection' },
+      },
+      {
+        path: 'admin/sync/logs',
+        name: 'SyncLogs',
+        component: () => import('@/views/admin/sync/SyncLogs.vue'),
+        meta: { title: '同步日志', hidden: true },
+      },
       // ── Dealer: Bandwidth ───────────────────────────────────────────────
       {
         path: 'dealer/bandwidth',
