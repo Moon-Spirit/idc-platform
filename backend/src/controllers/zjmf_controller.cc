@@ -1,6 +1,7 @@
 #include "zjmf_controller.h"
 #include "services/zjmf_adapter.h"
 #include "services/zjmf_sync_service.h"
+#include "services/zjmf_provisioning_service.h"
 #include "utils/crypto.h"
 #include "utils/db_client.h"
 #include "utils/logger.h"
@@ -312,41 +313,23 @@ Json::Value ZJMFController::processWebhook(
     result["processed"] = true;
 
     try {
-        // ── server provisioning status update ──────────────────────────────
-        if (eventType == "server_status" || eventType == "server.provision") {
-            std::string serverId = data["id"].asString();
-            std::string status   = data.get("status", "").asString();
+        // ── provisioning status updates ────────────────────────────────────
+        // Delegate to ZJMFProvisioningService for server/invoice provisioning
+        bool isProvisionEvent =
+            (eventType == "server_status" || eventType == "server.provision" ||
+             eventType == "invoice_status" || eventType == "invoice.update");
 
-            // Look up subscription by remote resource ID
-            auto db = DbClient::getClient();
-            auto subResult = db->execSqlSync(
-                "SELECT id FROM subscriptions WHERE remote_resource_id = $1",
-                serverId);
-
-            if (!subResult.empty()) {
-                int64_t subId = subResult[0]["id"].as<int64_t>();
-
-                // Update subscription provision status
-                std::string provisionStatus;
-                if (status == "active" || status == "running") {
-                    provisionStatus = "done";
-                } else if (status == "suspended") {
-                    provisionStatus = "suspended";
-                } else if (status == "terminated") {
-                    provisionStatus = "terminated";
-                } else {
-                    provisionStatus = "provisioning";
-                }
-
-                db->execSqlSync(
-                    "UPDATE subscriptions SET provision_status = $1, "
-                    "remote_resource_id = $2, updated_at = NOW() WHERE id = $3",
-                    provisionStatus, serverId, subId);
-
-                result["subscription_id"] = static_cast<Json::Int64>(subId);
-
-                LOG_INFO << "[ZJMFController] Webhook: subscription " << subId
-                         << " status → " << provisionStatus;
+        if (isProvisionEvent) {
+            auto provResult = ZJMFProvisioningService::handleWebhookCallback(payload);
+            if (provResult["processed"].asBool()) {
+                result["subscription_id"] = provResult["subscription_id"];
+                result["provision_status"] = provResult["provision_status"];
+                LOG_INFO << "[ZJMFController] Webhook: provisioning update processed "
+                         << "sub_id=" << provResult["subscription_id"]
+                         << " status=" << provResult["provision_status"];
+            } else {
+                result["processed"] = false;
+                result["note"] = provResult.get("note", provResult.get("error", "Unknown"));
             }
 
         // ── payment notification ──────────────────────────────────────────

@@ -19,14 +19,16 @@ struct OrderStates {
     static constexpr const char* kCancelled     = "cancelled";
     static constexpr const char* kProvisioning  = "provisioning";
     static constexpr const char* kActive        = "active";
-    static constexpr const char* kSuspended     = "suspended";
-    static constexpr const char* kTerminated    = "terminated";
+    static constexpr const char* kSuspended               = "suspended";
+    static constexpr const char* kTerminated              = "terminated";
+    static constexpr const char* kProvisioningFailed      = "provisioning_failed";
 
     /// All defined states.
     static const std::vector<const char*>& all() {
         static const std::vector<const char*> states = {
             kPending, kApproved, kRejected, kCancelled,
-            kProvisioning, kActive, kSuspended, kTerminated
+            kProvisioning, kActive, kSuspended, kTerminated,
+            kProvisioningFailed
         };
         return states;
     }
@@ -35,7 +37,8 @@ struct OrderStates {
     static bool isValid(const std::string& s) {
         static const std::unordered_set<std::string> valid = {
             kPending, kApproved, kRejected, kCancelled,
-            kProvisioning, kActive, kSuspended, kTerminated
+            kProvisioning, kActive, kSuspended, kTerminated,
+            kProvisioningFailed
         };
         return valid.find(s) != valid.end();
     }
@@ -70,6 +73,12 @@ inline const std::vector<TransitionRule>& kOrderTransitions() {
           "",              false, "开始开通" },
         { OrderStates::kProvisioning, OrderStates::kActive,
           "",              false, "开通完成" },
+        { OrderStates::kProvisioning, OrderStates::kProvisioningFailed,
+          "",              false, "开通失败（超时）" },
+
+        // Manual retry (admin)
+        { OrderStates::kProvisioningFailed, OrderStates::kProvisioning,
+          "provisioning:retry", false, "重试开通" },
 
         // Admin-initiated lifecycle transitions
         { OrderStates::kActive, OrderStates::kSuspended,

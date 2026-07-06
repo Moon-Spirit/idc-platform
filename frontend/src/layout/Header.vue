@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 import { Expand, Fold } from '@element-plus/icons-vue'
 
+const router = useRouter()
 const appStore = useAppStore()
 const authStore = useAuthStore()
+const cartStore = useCartStore()
 
 function toggleSidebar() {
   appStore.toggleSidebar()
@@ -13,6 +18,16 @@ function toggleSidebar() {
 function handleLogout() {
   authStore.logout()
 }
+
+function goToCart() {
+  router.push({ name: 'CartView' })
+}
+
+onMounted(() => {
+  if (authStore.isLoggedIn) {
+    cartStore.fetchCount()
+  }
+})
 </script>
 
 <template>
@@ -24,6 +39,17 @@ function handleLogout() {
       <span class="header-title">IDC 分销平台</span>
     </div>
     <div class="header-right">
+      <!-- Cart badge -->
+      <el-badge
+        :value="cartStore.itemCount"
+        :hidden="cartStore.itemCount === 0"
+        class="cart-badge"
+      >
+        <el-button text size="large" @click="goToCart">
+          <el-icon :size="20"><ShoppingCart /></el-icon>
+        </el-button>
+      </el-badge>
+
       <el-dropdown trigger="click">
         <span class="user-info">
           <el-icon><UserFilled /></el-icon>
@@ -62,6 +88,11 @@ function handleLogout() {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.cart-badge {
+  margin-right: 4px;
 }
 
 .user-info {

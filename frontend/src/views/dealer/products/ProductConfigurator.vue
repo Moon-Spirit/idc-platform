@@ -137,6 +137,19 @@ function getCycleSavings(): string {
   return ''
 }
 
+const yearlySavingsPercent = computed(() => {
+  if (!price.value) return 0
+  const monthly = Number(price.value.monthly_price)
+  const yearly = Number(price.value.yearly_price)
+  if (monthly <= 0 || yearly <= 0) return 0
+  return Math.round((monthly * 12 - yearly) / (monthly * 12) * 100)
+})
+
+const yearlyComparison = computed(() => {
+  if (!price.value) return 0
+  return Number(price.value.monthly_price) * 12 * quantity.value
+})
+
 // ── Methods ────────────────────────────────────────────────────────────────
 
 async function fetchProductDetail() {
@@ -364,15 +377,19 @@ onMounted(() => {
             </template>
 
             <div class="price-block">
+              <div class="price-section-label">标准价格</div>
               <div class="price-row">
-                <span class="price-label">月付价格</span>
+                <span class="price-label">月付</span>
                 <span class="price-value">¥{{ Number(price.monthly_price).toFixed(2) }}</span>
               </div>
               <div class="price-row">
-                <span class="price-label">年付价格</span>
+                <span class="price-label">年付</span>
                 <span class="price-value">¥{{ Number(price.yearly_price).toFixed(2) }}</span>
+                <span v-if="yearlySavingsPercent > 0" class="savings-pct-badge">
+                  年付省{{ yearlySavingsPercent }}%
+                </span>
               </div>
-              <div v-if="price.bandwidth_95_price" class="price-row">
+              <div v-if="price.bandwidth_95_price && Number(price.bandwidth_95_price) > 0" class="price-row">
                 <span class="price-label">带宽95计费</span>
                 <span class="price-value">¥{{ Number(price.bandwidth_95_price).toFixed(2) }}</span>
               </div>
@@ -382,12 +399,34 @@ onMounted(() => {
               </div>
             </div>
 
+            <!-- Price comparison (monthly vs yearly) -->
+            <div v-if="billingCycle === 'yearly' && yearlySavingsPercent > 0" class="comparison-block">
+              <div class="price-section-label">价格对比</div>
+              <div class="price-row">
+                <span class="price-label">月付&times;12</span>
+                <span class="price-value original">¥{{ yearlyComparison.toFixed(2) }}</span>
+              </div>
+              <div class="price-row">
+                <span class="price-label">年付价格</span>
+                <span class="price-value dealer">¥{{ (Number(price.yearly_price) * quantity.value).toFixed(2) }}</span>
+              </div>
+              <div class="price-row savings-row">
+                <span class="price-label">节省</span>
+                <span class="price-value savings">
+                  -¥{{ (yearlyComparison - Number(price.yearly_price) * quantity.value).toFixed(2) }}
+                </span>
+              </div>
+            </div>
+
             <!-- Billing cycle toggle -->
             <div class="cycle-toggle">
               <label class="config-label" style="margin-bottom: 8px; display: block">购买周期</label>
               <el-radio-group v-model="billingCycle">
                 <el-radio-button value="monthly">月付</el-radio-button>
-                <el-radio-button value="yearly">年付</el-radio-button>
+                <el-radio-button value="yearly">
+                  年付
+                  <span v-if="yearlySavingsPercent > 0" class="yearly-badge">省{{ yearlySavingsPercent }}%</span>
+                </el-radio-button>
               </el-radio-group>
               <div v-if="getCycleSavings()" class="saving-badge">
                 {{ getCycleSavings() }}
@@ -474,10 +513,22 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 
+.price-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-text-color-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
 .price-row {
   display: flex;
   justify-content: space-between;
-  padding: 6px 0;
+  align-items: center;
+  padding: 5px 0;
   font-size: 14px;
 }
 
@@ -488,6 +539,60 @@ onMounted(() => {
 .price-value {
   font-weight: 500;
   color: var(--el-text-color-primary);
+}
+
+.price-value.original {
+  text-decoration: line-through;
+  color: var(--el-text-color-placeholder);
+  font-weight: 400;
+}
+
+.price-value.dealer {
+  font-weight: 600;
+  color: #e6a23c;
+}
+
+.price-value.savings {
+  font-weight: 700;
+  color: #f56c6c;
+}
+
+.savings-row {
+  background: rgba(245, 108, 108, 0.06);
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+
+.savings-pct-badge {
+  display: inline-block;
+  padding: 0 6px;
+  background: #f56c6c;
+  color: #fff;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  margin-left: 4px;
+}
+
+.comparison-block {
+  background: var(--el-fill-color-lighter);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+.yearly-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  background: #f56c6c;
+  color: #fff;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  vertical-align: middle;
 }
 
 .cycle-toggle {

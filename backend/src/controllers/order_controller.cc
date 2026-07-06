@@ -1,6 +1,7 @@
 #include "order_controller.h"
 #include "services/order_service.h"
 #include "services/product_service.h"
+#include "services/zjmf_provisioning_service.h"
 #include "utils/response.h"
 #include "utils/logger.h"
 
@@ -174,6 +175,9 @@ void OrderController::approveOrder(
             id, "approved",
             getUserId(req), getUsername(req),
             getRoleId(req), remark);
+
+        // Trigger downstream provisioning after successful approval
+        ZJMFProvisioningService::provisionOrder(id);
 
         callback(JsonResponse::ok(result));
     } catch (const std::invalid_argument& e) {

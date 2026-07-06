@@ -12,10 +12,12 @@
 #include "controllers/payment_controller.h"
 #include "controllers/balance_controller.h"
 #include "controllers/zjmf_controller.h"
+#include "controllers/provisioning_controller.h"
 #include "cron/billing_cron.h"
 #include "cron/dunning_cron.h"
 #include "cron/zjmf_sync_cron.h"
 #include "services/zjmf_adapter.h"
+#include "services/zjmf_provisioning_service.h"
 
 #include <iostream>
 
@@ -98,6 +100,26 @@ int main() {
 
     // ── Register ZJMF sync cron (product/5min, inventory/1min, client/10min) ─
     idc::ZJMFSyncCron::init();
+
+    // ── Register provisioning polling timer (every 30 seconds) ─────────────
+    {
+        auto loop = drogon::app().getLoop();
+        // First run after 30 seconds startup delay
+        loop->runAfter(30, []() {
+            idc::ZJMFProvisioningService::runPollingCheck();
+        });
+        loop->runEvery(
+            static_cast<double>(idc::ZJMFProvisioningService::kPollIntervalSeconds),
+            []() {
+                try {
+                    idc::ZJMFProvisioningService::runPollingCheck();
+                } catch (const std::exception& e) {
+                    LOG_ERROR << "[Provisioning] Polling error: " << e.what();
+                }
+            });
+        LOG_INFO << "[Provisioning] Polling timer registered (every "
+                 << idc::ZJMFProvisioningService::kPollIntervalSeconds << "s)";
+    }
 
     // ── Start server ─────────────────────────────────────────────────────────
     std::cout << "IDC Platform API Server started on port 8080" << std::endl;

@@ -65,6 +65,13 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/dealer/products/ProductConfigurator.vue'),
         meta: { title: '产品详情', hidden: true },
       },
+      // ── Dealer: Dashboard ──────────────────────────────────────────────
+      {
+        path: 'dealer/dashboard',
+        name: 'DealerDashboard',
+        component: () => import('@/views/dealer/DashboardView.vue'),
+        meta: { title: '经销商首页', hidden: true },
+      },
       // ── Dealer: Cart ───────────────────────────────────────────────────
       {
         path: 'dealer/cart',
@@ -85,6 +92,39 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/dealer/order/OrderDetail.vue'),
         meta: { title: '订单详情', hidden: true },
       },
+      // ── Admin: Invoices ─────────────────────────────────────────────────
+      {
+        path: 'admin/invoices',
+        name: 'AdminInvoiceList',
+        component: () => import('@/views/admin/invoice/InvoiceAdmin.vue'),
+        meta: { title: '账单管理', icon: 'Document', role: 'admin' },
+      },
+      {
+        path: 'admin/invoices/:id',
+        name: 'AdminInvoiceDetail',
+        component: () => import('@/views/dealer/invoice/InvoiceDetail.vue'),
+        meta: { title: '账单详情', hidden: true, role: 'admin' },
+      },
+      // ── Dealer: Invoices ────────────────────────────────────────────────
+      {
+        path: 'dealer/invoices',
+        name: 'DealerInvoiceList',
+        component: () => import('@/views/dealer/invoice/InvoiceList.vue'),
+        meta: { title: '我的账单', icon: 'Document', role: 'dealer' },
+      },
+      {
+        path: 'dealer/invoices/:id',
+        name: 'DealerInvoiceDetail',
+        component: () => import('@/views/dealer/invoice/InvoiceDetail.vue'),
+        meta: { title: '账单详情', hidden: true, role: 'dealer' },
+      },
+      // ── Dealer: Bandwidth ───────────────────────────────────────────────
+      {
+        path: 'dealer/bandwidth',
+        name: 'DealerBandwidth',
+        component: () => import('@/views/dealer/BandwidthView.vue'),
+        meta: { title: '带宽监控', icon: 'Monitor', role: 'dealer' },
+      },
     ],
   },
 ]
@@ -104,6 +144,21 @@ router.beforeEach(async (to, _from) => {
 
   if (!authStore.token) {
     return { name: 'Login', query: { redirect: to.fullPath } }
+  }
+
+  // Ensure user info is loaded for role check
+  if (!authStore.user) {
+    try {
+      await authStore.fetchUserInfo()
+    } catch {
+      return { name: 'Login' }
+    }
+  }
+
+  // Role-based route guard
+  const requiredRole = to.meta.role as string | undefined
+  if (requiredRole && authStore.user?.role !== requiredRole) {
+    return { name: 'Dashboard' }
   }
 
   return true

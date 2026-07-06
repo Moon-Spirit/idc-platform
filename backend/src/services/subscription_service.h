@@ -98,6 +98,21 @@ public:
 
     // ── Upgrade / downgrade ──────────────────────────────────────────────
 
+    // ── Provision status transitions ────────────────────────────────────
+
+    /// Update provision_status for a subscription.
+    /// Valid transitions: pending → provisioning → done → failed
+    /// @return Updated subscription JSON.
+    /// @throws std::invalid_argument on invalid transition
+    static Json::Value updateProvisionStatus(int64_t subId,
+                                              const std::string& newStatus,
+                                              const std::string& errorMessage = "");
+
+    /// Get the provisioning state for a subscription.
+    static std::string getProvisionStatus(int64_t subId);
+
+    // ── Upgrade / downgrade ──────────────────────────────────────────────
+
     /// Submit an upgrade/downgrade spec change request.
     ///
     /// Creates a subscription_upgrades record with the current specs as

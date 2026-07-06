@@ -494,6 +494,110 @@ Json::Value SubscriptionService::terminateSubscription(int64_t subId,
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  Provision Status Transitions
+// ═══════════════════════════════════════════════════════════════════════════
+
+Json::Value SubscriptionService::updateProvisionStatus(
+    int64_t subId,
+    const std::string& newStatus,
+    const std::string& errorMessage) {
+    // Validate the transition
+    auto db = DbClient::getClient();
+    auto rows = db->execSqlSync(
+        "SELECT provision_status FROM subscriptions WHERE id = $1", subId);
+
+    if (rows.empty()) {
+        throw std::invalid_argument("Subscription not found: " + std::to_string(subId));
+    }
+
+    std::string currentStatus = rows[0]["provision_status"].as<std::string>();
+
+    // Define valid transitions
+    static const std::unordered_set<std::string> validFromForPending = {"done"};
+    static const std::unordered_set<std::string> validFromForProvisioning = {"pending", "failed"};
+    static const std::unordered_set<std::string> validFromForDone = {"provisioning", "pending"};
+    static const std::unordered_set<std::string> validFromForFailed = {"provisioning", "pending"};
+
+    bool valid = false;
+    if (newStatus == "pending") {
+        valid = (currentStatus == "done");
+    } else if (newStatus == "provisioning") {
+        valid = (currentStatus == "pending" || currentStatus == "failed");
+    } else if (newStatus == "done") {
+        valid = (currentStatus == "provisioning" || currentStatus == "pending");
+    } else if (newStatus == "failed") {
+        valid = (currentStatus == "provisioning" || currentStatus == "pending");
+    }
+
+    if (!valid) {
+        throw std::invalid_argument(
+            "Invalid provision_status transition: " + currentStatus +
+            " → " + newStatus);
+    }
+
+    Json::Value result;
+    DbClient::transaction([&](drogon::orm::Transaction& trans) {
+        // Update provision_status
+        if (newStatus == "failed" && !errorMessage.empty()) {
+            trans.execSqlSync(
+                "UPDATE subscriptions SET provision_status = $1, "
+                "provisioning_error = $2, updated_at = NOW() "
+                "WHERE id = $3",
+                newStatus, errorMessage, subId);
+        } else {
+            trans.execSqlSync(
+                "UPDATE subscriptions SET provision_status = $1, "
+                "provisioning_error = NULL, updated_at = NOW() "
+                "WHERE id = $2",
+                newStatus, subId);
+        }
+
+        // If transitioning to done, also update subscription status to active
+        if (newStatus == "done") {
+            trans.execSqlSync(
+                "UPDATE subscriptions SET status = 'active', "
+                "start_date = COALESCE(start_date, CURRENT_DATE), "
+                "updated_at = NOW() "
+                "WHERE id = $1",
+                subId);
+        }
+
+        // Record timeline entry
+        std::string remark;
+        if (newStatus == "done") {
+            remark = "开通完成";
+        } else if (newStatus == "failed") {
+            remark = "开通失败: " + (errorMessage.empty() ? "未知错误" : errorMessage);
+        } else if (newStatus == "provisioning") {
+            remark = "开始开通服务";
+        }
+
+        trans.execSqlSync(
+            "INSERT INTO subscription_timeline "
+            "(subscription_id, from_status, to_status, operator_id, "
+            " operator_name, remark) "
+            "VALUES ($1, $2, $3, 0, 'system', $4)",
+            subId, currentStatus, newStatus, remark);
+
+        result["subscription_id"] = static_cast<Json::Int64>(subId);
+        result["provision_status"] = newStatus;
+        result["previous_status"] = currentStatus;
+    });
+
+    return result;
+}
+
+std::string SubscriptionService::getProvisionStatus(int64_t subId) {
+    auto db = DbClient::getClient();
+    auto rows = db->execSqlSync(
+        "SELECT provision_status FROM subscriptions WHERE id = $1", subId);
+    if (rows.empty()) {
+        return "";
+    }
+    return rows[0]["provision_status"].as<std::string>();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  Submit Upgrade / Downgrade Request
 // ═══════════════════════════════════════════════════════════════════════════
 
