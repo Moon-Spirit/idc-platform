@@ -1,0 +1,37 @@
+# Build
+backend/build/
+frontend/dist/
+frontend/node_modules/
+*.o
+*.obj
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env.local
+.env.*.local
+
+# Docker
+docker/data/
+
+# Logs
+*.log
+/logs/
+
+# Drogon
+backend/orm/
+
+# Codegraph (managed externally)
+.codegraph/
+
+# OMO system artifacts
+.omo/run-continuation/
