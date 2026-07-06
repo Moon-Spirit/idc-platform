@@ -1,11 +1,14 @@
 #include "invoice_controller.h"
 #include "services/invoice_service.h"
+#include "services/payment_service.h"
 #include "services/pdf_service.h"
+#include "utils/db_client.h"
 #include "utils/response.h"
 #include "utils/logger.h"
 
 #include <drogon/HttpRequest.h>
 #include <drogon/HttpResponse.h>
+#include <drogon/orm/DbClient.h>
 #include <json/json.h>
 
 #include <string>
@@ -27,6 +30,15 @@ namespace {
 
     std::string getUsername(const drogon::HttpRequestPtr& req) {
         return req->getAttributes()->get<std::string>("username");
+    }
+
+    int64_t getUserDistributorId(int64_t userId) {
+        auto db = idc::DbClient::getClient();
+        auto result = db->execSqlSync(
+            "SELECT distributor_id FROM users WHERE id = $1", userId);
+        if (result.empty()) return 0;
+        auto val = result[0]["distributor_id"];
+        return val.isNull() ? 0 : val.as<int64_t>();
     }
 } // anonymous namespace
 
@@ -166,6 +178,60 @@ void InvoiceController::payByBalance(
         callback(JsonResponse::error(400, e.what()));
     } catch (const std::exception& e) {
         LOG_IDC_ERROR(req, "[Invoice] payByBalance error: " << e.what());
+        callback(JsonResponse::serverError(e.what()));
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  POST /api/v1/invoices/{id}/pay-online
+// ═══════════════════════════════════════════════════════════════════════════
+
+void InvoiceController::payOnline(
+    const drogon::HttpRequestPtr& req,
+    std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+    int64_t id) {
+    try {
+        auto body = req->getJsonObject();
+        if (!body) {
+            callback(JsonResponse::error(400, "Request body must be valid JSON"));
+            return;
+        }
+
+        if (!body->isMember("method")) {
+            callback(JsonResponse::error(400, "Missing required field: method (alipay|wechat)"));
+            return;
+        }
+
+        std::string method = (*body)["method"].asString();
+        if (method != "alipay" && method != "wechat") {
+            callback(JsonResponse::error(400,
+                "Unsupported payment method: " + method + ". Must be 'alipay' or 'wechat'"));
+            return;
+        }
+
+        int64_t userId = getUserId(req);
+        int64_t roleId = getRoleId(req);
+        bool isAdmin = (roleId == 1);
+
+        // Get distributor_id for the user
+        int64_t distributorId = 0;
+        if (isAdmin && body->isMember("distributor_id") && !(*body)["distributor_id"].isNull()) {
+            distributorId = static_cast<int64_t>((*body)["distributor_id"].asInt64());
+        } else {
+            distributorId = getUserDistributorId(userId);
+            if (distributorId <= 0) {
+                callback(JsonResponse::error(403,
+                    "No distributor account associated with this user"));
+                return;
+            }
+        }
+
+        auto payment = PaymentService::createPayment(id, distributorId, method);
+        callback(JsonResponse::ok(payment));
+    } catch (const std::invalid_argument& e) {
+        callback(JsonResponse::error(400, e.what()));
+    } catch (const std::exception& e) {
+        LOG_IDC_ERROR(req, "[Invoice] payOnline error: " << e.what());
         callback(JsonResponse::serverError(e.what()));
     }
 }

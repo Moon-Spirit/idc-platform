@@ -8,7 +8,7 @@
       "plan_name": "idc-platform-v1",
       "status": "active",
       "started_at": "2026-07-06T08:04:44.504Z",
-      "updated_at": "2026-07-06T10:51:11.814Z",
+      "updated_at": "2026-07-06T11:12:41.739Z",
       "session_ids": [
         "opencode:ses_0c9e6d3b5fferywCyyud4EMUPO"
       ],
@@ -120,6 +120,19 @@
           "status": "completed",
           "ended_at": "2026-07-06T10:51:11.813Z",
           "elapsed_ms": 50426
+        },
+        "todo:17": {
+          "task_key": "todo:17",
+          "task_label": "17",
+          "task_title": "支付宝+微信支付集成",
+          "session_id": "opencode:ses_0c8f1d8a7ffeBQESUhlamDNDbF",
+          "agent": "Sisyphus-Junior",
+          "category": "deep",
+          "updated_at": "2026-07-06T11:12:41.739Z",
+          "started_at": "2026-07-06T11:04:33.453Z",
+          "status": "completed",
+          "ended_at": "2026-07-06T11:12:41.739Z",
+          "elapsed_ms": 488286
         }
       }
     }
@@ -127,7 +140,7 @@
   "active_plan": "/home/sanjiu/IDC/.omo/plans/idc-platform-v1.md",
   "started_at": "2026-07-06T08:04:44.504Z",
   "status": "active",
-  "updated_at": "2026-07-06T10:51:11.814Z",
+  "updated_at": "2026-07-06T11:12:41.739Z",
   "session_ids": [
     "opencode:ses_0c9e6d3b5fferywCyyud4EMUPO"
   ],
@@ -239,6 +252,19 @@
       "status": "completed",
       "ended_at": "2026-07-06T10:51:11.813Z",
       "elapsed_ms": 50426
+    },
+    "todo:17": {
+      "task_key": "todo:17",
+      "task_label": "17",
+      "task_title": "支付宝+微信支付集成",
+      "session_id": "opencode:ses_0c8f1d8a7ffeBQESUhlamDNDbF",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-07-06T11:12:41.739Z",
+      "started_at": "2026-07-06T11:04:33.453Z",
+      "status": "completed",
+      "ended_at": "2026-07-06T11:12:41.739Z",
+      "elapsed_ms": 488286
     }
   },
   "agent": "atlas"

@@ -9,8 +9,13 @@
 #include "controllers/user_controller.h"
 #include "controllers/billing_controller.h"
 #include "controllers/invoice_controller.h"
+#include "controllers/payment_controller.h"
+#include "controllers/balance_controller.h"
+#include "controllers/zjmf_controller.h"
 #include "cron/billing_cron.h"
 #include "cron/dunning_cron.h"
+#include "cron/zjmf_sync_cron.h"
+#include "services/zjmf_adapter.h"
 
 #include <iostream>
 
@@ -87,6 +92,12 @@ int main() {
 
     // ── Register dunning cron (daily check for overdue invoices) ──────────
     idc::DunningCron::init();
+
+    // ── Initialize ZJMF connection manager ──────────────────────────────────
+    idc::ZJMFConnectionManager::init();
+
+    // ── Register ZJMF sync cron (product/5min, inventory/1min, client/10min) ─
+    idc::ZJMFSyncCron::init();
 
     // ── Start server ─────────────────────────────────────────────────────────
     std::cout << "IDC Platform API Server started on port 8080" << std::endl;

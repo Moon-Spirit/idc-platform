@@ -35,6 +35,9 @@ public:
         ADD_METHOD_TO(InvoiceController::payByBalance,
                       "/api/v1/invoices/{id}/pay", drogon::Put,
                       "JWTFilter", "RBACFilter(invoice:pay)");
+        ADD_METHOD_TO(InvoiceController::payOnline,
+                      "/api/v1/invoices/{id}/pay-online", drogon::Post,
+                      "JWTFilter", "RBACFilter(invoice:pay)");
         ADD_METHOD_TO(InvoiceController::generateInvoices,
                       "/api/v1/invoices/generate", drogon::Post,
                       "JWTFilter", "RBACFilter(invoice:generate)");
@@ -62,6 +65,15 @@ public:
     /// PUT /api/v1/invoices/{id}/pay
     /// Pay by distributor balance.
     static void payByBalance(
+        const drogon::HttpRequestPtr& req,
+        std::function<void(const drogon::HttpResponsePtr&)>&& callback,
+        int64_t id);
+
+    /// POST /api/v1/invoices/{id}/pay-online
+    /// Initiate online payment (Alipay/WeChat) for an invoice.
+    /// Body: { "method": "alipay" | "wechat" }
+    /// Returns QR code URL for the frontend to display.
+    static void payOnline(
         const drogon::HttpRequestPtr& req,
         std::function<void(const drogon::HttpResponsePtr&)>&& callback,
         int64_t id);
