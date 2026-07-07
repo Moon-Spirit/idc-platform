@@ -48,19 +48,24 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <h2 class="login-title">IDC 分销平台</h2>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <h1>IDC 分销平台</h1>
+        <p class="auth-subtitle">请登录您的账户</p>
+      </div>
+
       <el-alert
         v-if="loginError"
         :title="loginError"
         type="error"
         show-icon
         closable
-        class="login-error"
+        class="auth-alert"
         @close="loginError = ''"
       />
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px" @keyup.enter="handleLogin">
+
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="handleLogin">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" placeholder="请输入用户名" />
         </el-form-item>
@@ -68,57 +73,15 @@ async function handleLogin() {
           <el-input v-model="form.password" type="password" placeholder="请输入密码" show-password />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" style="width: 100%" @click="handleLogin">
+          <el-button type="primary" :loading="loading" style="width: 100%" size="large" @click="handleLogin">
             {{ loading ? '登录中...' : '登 录' }}
           </el-button>
         </el-form-item>
-        <el-form-item>
-          <span class="register-link">
-            还没有账号？<router-link to="/register">立即注册</router-link>
-          </span>
-        </el-form-item>
       </el-form>
+
+      <div class="auth-footer">
+        还没有账号？<router-link to="/register">立即注册</router-link>
+      </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.login-container {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.login-card {
-  width: 400px;
-  padding: 40px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-}
-
-.login-title {
-  text-align: center;
-  margin-bottom: 30px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-}
-
-.login-error {
-  margin-bottom: 18px;
-}
-
-.register-link {
-  width: 100%;
-  text-align: center;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
-
-.register-link a {
-  color: var(--el-color-primary);
-  text-decoration: none;
-}
-</style>

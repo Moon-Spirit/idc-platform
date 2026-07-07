@@ -408,9 +408,12 @@ watch(activeStep, (newVal) => {
 </script>
 
 <template>
-  <div class="setup-container">
-    <div class="setup-card">
-      <h1 class="setup-title">IDC 平台安装向导</h1>
+  <div class="auth-container" style="align-items: flex-start; padding: 40px 20px;">
+    <div class="auth-card auth-card--xwide" style="padding: 40px 48px;">
+      <div class="auth-logo">
+        <h1>IDC 平台安装向导</h1>
+        <p class="auth-subtitle">系统初始化配置</p>
+      </div>
 
       <!-- ═════════════════════════════════════════════════════════════════
            Step indicator
@@ -915,36 +918,9 @@ watch(activeStep, (newVal) => {
 </template>
 
 <style scoped>
-/* ── Layout ─────────────────────────────────────────────────────────────── */
-.setup-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 16px;
-  box-sizing: border-box;
-}
-
-.setup-card {
-  width: 100%;
-  max-width: 720px;
-  padding: 40px 48px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-}
-
-.setup-title {
-  text-align: center;
-  margin: 0 0 32px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
 .setup-steps {
   margin-bottom: 32px;
+  margin-top: 24px;
 }
 
 /* ── Step panel ──────────────────────────────────────────────────────────── */
@@ -1173,14 +1149,6 @@ watch(activeStep, (newVal) => {
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .setup-card {
-    padding: 24px 20px;
-  }
-
-  .setup-title {
-    font-size: 20px;
-  }
-
   .step-form {
     max-width: 100%;
   }

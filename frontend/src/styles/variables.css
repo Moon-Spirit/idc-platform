@@ -1,6 +1,46 @@
 :root {
+  /* ── Layout ─── */
   --sidebar-width: 220px;
   --sidebar-collapsed-width: 64px;
-  --header-height: 60px;
+  --header-height: 56px;
+
+  /* ── Colors ─── */
   --primary-color: #409eff;
+  --primary-hover: #66b1ff;
+  --primary-active: #3a8ee6;
+
+  /* Sidebar */
+  --sidebar-bg: #1e2e3d;
+  --sidebar-bg-dark: #182332;
+  --sidebar-text: #bfcbd9;
+  --sidebar-text-active: #ffffff;
+  --sidebar-item-hover: #263445;
+  --sidebar-item-active: #409eff;
+
+  /* Header */
+  --header-bg: #ffffff;
+  --header-border: #e4e7ed;
+
+  /* Main */
+  --main-bg: #f0f2f5;
+
+  /* Cards */
+  --card-bg: #ffffff;
+  --card-radius: 8px;
+  --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  /* Text */
+  --text-primary: #303133;
+  --text-regular: #606266;
+  --text-secondary: #909399;
+  --text-placeholder: #c0c4cc;
+
+  /* Borders */
+  --border-color: #e4e7ed;
+  --border-color-light: #ebeef5;
+  --border-color-lighter: #f2f6fc;
+
+  /* Table */
+  --table-header-bg: #fafafa;
+  --table-stripe: #fafafa;
 }

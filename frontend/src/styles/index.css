@@ -1,41 +1,295 @@
-/* 简约风格 */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body, #app { height: 100%; }
+/* ═══════════════════════════════════════════════════════════════════════════
+ * IDC Platform — Professional Admin Theme
+ * Inspired by 智简魔方 / 魔方财务 style admin panels
+ * ═══════════════════════════════════════════════════════════════════════════ */
+@import './variables.css';
+
+/* ── Base Reset ───────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+}
+
+html {
+  font-size: 14px;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  background: #f5f5f5; color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+  background: var(--main-bg);
+  color: var(--text-primary);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
-a { color: #409eff; text-decoration: none; }
 
-/* 布局 */
-.el-container.is-vertical { height: 100%; }
-.el-aside { background: #fff; border-right: 1px solid #eee; }
-.el-header {
-  background: #fff; border-bottom: 1px solid #eee;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px; height: 50px !important;
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s;
 }
-.el-main { background: #f5f5f5; padding: 20px; }
-
-/* 卡片 */
-.el-card { border: none; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-.el-table th { background: #fafafa !important; font-weight: 500; }
-.el-button--primary { border-radius: 6px; }
-
-/* 登录页 */
-.login-wrapper {
-  min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: #fff;
+a:hover {
+  color: var(--primary-hover);
 }
-.login-card { width: 380px; padding: 32px; }
-.login-card h2 { text-align: center; margin-bottom: 24px; font-weight: 600; font-size: 24px; color: #1a1a1a; }
 
-/* 工具类 */
+/* ── Element Plus Overrides ─────────────────────────────────────────────── */
+
+/* Buttons */
+.el-button {
+  border-radius: 6px !important;
+  font-weight: 500;
+}
+.el-button--primary {
+  --el-button-bg-color: var(--primary-color);
+  --el-button-border-color: var(--primary-color);
+}
+.el-button--primary:hover {
+  --el-button-hover-bg-color: var(--primary-hover);
+  --el-button-hover-border-color: var(--primary-hover);
+}
+.el-button--primary:active {
+  --el-button-active-bg-color: var(--primary-active);
+  --el-button-active-border-color: var(--primary-active);
+}
+.el-button--primary.is-disabled {
+  --el-button-disabled-bg-color: #a0cfff;
+  --el-button-disabled-border-color: #a0cfff;
+}
+.el-button--small {
+  border-radius: 4px !important;
+}
+
+/* Cards */
+.el-card {
+  border: none !important;
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow) !important;
+  transition: box-shadow 0.25s ease;
+}
+.el-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+.el-card__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color-light);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Tables */
+.el-table {
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+.el-table th.el-table__cell {
+  background-color: var(--table-header-bg) !important;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color-light) !important;
+}
+.el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell {
+  background-color: var(--table-stripe) !important;
+}
+.el-table__body tr.el-table__row--striped:hover td.el-table__cell {
+  background-color: #f0f5ff !important;
+}
+.el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
+  background-color: #f0f5ff !important;
+}
+.el-table__cell {
+  padding: 12px 0 !important;
+}
+
+/* Form */
+.el-form-item__label {
+  font-weight: 500;
+  color: var(--text-regular);
+}
+.el-input__wrapper {
+  border-radius: 6px !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px var(--primary-color) inset !important;
+}
+.el-input__inner {
+  height: 36px;
+}
+.el-textarea__inner {
+  border-radius: 6px !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+}
+
+/* Tags */
+.el-tag {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Dialog / Drawer */
+.el-dialog {
+  border-radius: 8px !important;
+}
+.el-dialog__header {
+  padding: 20px 24px 0;
+  font-weight: 600;
+}
+.el-dialog__body {
+  padding: 20px 24px;
+}
+.el-dialog__footer {
+  padding: 12px 24px 20px;
+}
+
+/* Message */
+.el-message {
+  border-radius: 6px !important;
+}
+
+/* Alert */
+.el-alert {
+  border-radius: 6px;
+}
+
+/* Steps */
+.el-step__title {
+  font-size: 13px !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #909399;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ── Layout Helpers ──────────────────────────────────────────────────────── */
+
+/* Page wrapper inside main content area */
+.page-wrapper {
+  padding: 0;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+.page-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+.page-header .page-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ── Utility Classes ─────────────────────────────────────────────────────── */
 .flex-center { display: flex; align-items: center; justify-content: center; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-col { display: flex; flex-direction: column; }
+.gap-4 { gap: 4px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
 .gap-16 { gap: 16px; }
+.gap-20 { gap: 20px; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
 .mt-16 { margin-top: 16px; }
+.mt-20 { margin-top: 20px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
 .mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
 .p-16 { padding: 16px; }
+.p-20 { padding: 20px; }
+.p-24 { padding: 24px; }
 .text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 12px; }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-placeholder); }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.w-full { width: 100%; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Auth Pages (Login / Register / Setup) ───────────────────────────────── */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--main-bg);
+  padding: 20px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 40px 36px;
+}
+
+.auth-card--wide {
+  max-width: 500px;
+}
+
+.auth-card--xwide {
+  max-width: 720px;
+}
+
+.auth-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.auth-logo h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+.auth-logo .auth-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.auth-alert {
+  margin-bottom: 18px;
+}
+
+.auth-footer {
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+.auth-footer a {
+  color: var(--primary-color);
+  text-decoration: none;
+}

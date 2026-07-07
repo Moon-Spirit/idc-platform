@@ -83,9 +83,12 @@ function goToLogin() {
 </script>
 
 <template>
-  <div class="register-container">
-    <div class="register-card">
-      <h2 class="register-title">经销商注册</h2>
+  <div class="auth-container">
+    <div class="auth-card auth-card--wide">
+      <div class="auth-logo">
+        <h1>经销商注册</h1>
+        <p class="auth-subtitle">创建您的经销商账户</p>
+      </div>
 
       <el-alert
         v-if="registerError"
@@ -93,21 +96,21 @@ function goToLogin() {
         type="error"
         show-icon
         closable
-        class="register-alert"
+        class="auth-alert"
         @close="registerError = ''"
       />
 
       <el-alert
         v-if="registerSuccess"
-        title="注册申请已提交，请等待管理员审核"
+        title="注册申请已提交"
         type="success"
         show-icon
         :closable="false"
-        class="register-alert"
+        class="auth-alert"
       >
         <template #default>
           <p>您的账户创建申请已提交，审核通过后您将收到通知。</p>
-          <el-button type="primary" @click="goToLogin" class="mt-2">返回登录</el-button>
+          <el-button type="primary" @click="goToLogin" class="mt-8">返回登录</el-button>
         </template>
       </el-alert>
 
@@ -116,7 +119,7 @@ function goToLogin() {
         ref="formRef"
         :model="form"
         :rules="rules"
-        label-width="90px"
+        label-position="top"
         @keyup.enter="handleRegister"
       >
         <el-form-item label="用户名" prop="username">
@@ -138,61 +141,15 @@ function goToLogin() {
           <el-input v-model="form.company_name" placeholder="请输入公司名称" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loading" style="width: 100%" @click="handleRegister">
+          <el-button type="primary" :loading="loading" style="width: 100%" size="large" @click="handleRegister">
             {{ loading ? '提交中...' : '提交注册' }}
           </el-button>
         </el-form-item>
-        <el-form-item>
-          <span class="login-link">
-            已有账号？<router-link to="/login">立即登录</router-link>
-          </span>
-        </el-form-item>
       </el-form>
+
+      <div v-if="!registerSuccess" class="auth-footer">
+        已有账号？<router-link to="/login">立即登录</router-link>
+      </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.register-container {
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.register-card {
-  width: 460px;
-  padding: 40px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
-}
-
-.register-title {
-  text-align: center;
-  margin-bottom: 24px;
-  color: var(--el-text-color-primary);
-  font-size: 24px;
-}
-
-.register-alert {
-  margin-bottom: 18px;
-}
-
-.login-link {
-  width: 100%;
-  text-align: center;
-  font-size: 14px;
-  color: var(--el-text-color-secondary);
-}
-
-.login-link a {
-  color: var(--el-color-primary);
-  text-decoration: none;
-}
-
-.mt-2 {
-  margin-top: 8px;
-}
-</style>
